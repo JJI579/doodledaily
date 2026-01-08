@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from database import init_db, close_db
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from pathlib import Path
 
 currentPath = Path.cwd()
@@ -54,8 +56,9 @@ async def tempDebug(tempData: tempForm):
 		"detail": "ok"
 	}
 
-
 from routes import users, auth, friends, photos, notifications
+
+app.mount('/static', StaticFiles(directory=currentPath / 'photos'), name='static')
 
 app.include_router(notifications.router)
 app.include_router(users.router)

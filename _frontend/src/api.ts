@@ -24,10 +24,8 @@ api.interceptors.response.use(
 	async (error: AxiosError & { config?: any }) => {
 		const originalRequest = error.config;
 		if (!originalRequest) return Promise.reject(error);
-		console.log("having to do this")
 		if (error.response?.status === 401 && !originalRequest._retry) {
-			originalRequest._retry = true; console.log("here?")
-
+			originalRequest._retry = true;
 			try {
 				// Call refresh endpoint
 				const refreshToken = localStorage.getItem('refresh_token');

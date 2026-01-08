@@ -25,8 +25,6 @@ async function cancelRequest() {
 	}
 }
 
-console.log(props.data.status, props.data.userName, props.data.wasSent)
-
 const emit = defineEmits(['refresh'])
 
 async function acceptRequest() {

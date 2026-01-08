@@ -31,7 +31,6 @@ async function deletePost() {
 	const resp = await api.post(`/photos/${focusedPhoto.value}/delete`);
 
 	if ('detail' in resp.data) {
-		console.log(resp.data.detail)
 		showOptions.value = false
 		setTimeout(() => {
 			fetchImages();

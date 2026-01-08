@@ -36,4 +36,4 @@ serviceAccountKey.json
 __pycache__/
 old_
 *.db
-
+backend/photos

@@ -107,7 +107,6 @@ function downloadBase64Image() {
 }
 
 const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID'));
-
 </script>
 
 <template>
@@ -123,7 +122,7 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 			</div>
 		</div>
 		<div class="photo__canvas">
-			<img :src="props.photo.photoData" class="photo__img" />
+			<img :src="props.photo.photoData" class="photo__img" loading="lazy" />
 		</div>
 
 		<div class="photo__content">

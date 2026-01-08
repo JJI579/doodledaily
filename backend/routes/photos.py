@@ -6,7 +6,8 @@ from models import User, Photo, Comment, Favourite, Friend
 from funcs import get_current_user, get_session
 from sqlalchemy import case, func
 from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn
-
+import secrets
+from base64 import b64decode
 from .auth import fetchNotificationTokens
 from fcm_messaging import dispatchNotification
 router = APIRouter(
@@ -14,17 +15,30 @@ router = APIRouter(
 	tags=["photos"],
 )
 
+from pathlib import Path
+
+photosDir = Path.cwd() / "photos"
+photosDir.mkdir(exist_ok=True)
+
 @router.post('/create')
-async def savePhoto(photoData: PhotoCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)):
+async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)):
+	
+
+	
+	photoName = f"{secrets.token_urlsafe(64)}.png"
+	
+	with open(photosDir / photoName, "wb") as f:
+		f.write(b64decode(photoData.photoData.split('base64,')[1]))
+	
+	photoURL = f'{request.base_url}{"api/" if "127" not in str(request.base_url) else ""}static/{photoName}'
 	photoObject = Photo(
 		photoName=photoData.photoName,
 		photoType=photoData.photoType,
-		photoData=photoData.photoData,
+		photoData=photoURL,
 		photoOwnerID=current_user.userID
 	)
-
 	session.add(photoObject)
-	
+
 	resp = await session.execute(select(Friend).where(
 		and_(
 			or_(
