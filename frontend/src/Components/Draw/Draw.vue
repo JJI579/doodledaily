@@ -1,0 +1,325 @@
+<script setup lang="ts">
+import VueDrawingCanvas from 'vue-drawing-canvas';
+import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import router from '../../router';
+import api from '../../api';
+
+onMounted(() => {
+	if (localStorage.getItem('token') == undefined || localStorage.getItem('token') == '') {
+		return router.push({ name: 'home' });
+	}
+});
+
+const canvasColour = ref('000000');
+const canvas = ref<InstanceType<typeof VueDrawingCanvas> | null>(null);
+
+function undoCanvas() {
+	canvas.value?.undo();
+}
+function redoCanvas() {
+	canvas.value?.redo();
+}
+
+
+
+
+const saveCanvas = async () => {
+	if (!canvas.value) return;
+	const imageData = canvas.value.save();
+
+	try {
+		const { data } = await api.post('/photos/create', {
+			photoName: 'pibble',
+			photoType: 'drawing',
+			photoData: imageData,
+		});
+		canvas.value.clear();
+		localStorage.setItem('image', '');
+		router.back();
+	} catch (error: any) {
+		console.error('Failed to save canvas', error.response?.data || error.message);
+	}
+};
+
+// CANVAS FUNCTIONALITY
+const brushRange = ref(5);
+const brushSize = computed<number>(() => {
+	if (brushRange.value < 1) {
+		return 1;
+	}
+	return Number(brushRange.value);
+});
+
+const showColourPicker = ref(false);
+const sizeObject = ref<HTMLElement | null>();
+
+function saveColour(colour?: string) {
+	showColourPicker.value = false;
+	if (colour === undefined) {
+		canvasColour.value = canvasColour.value;
+		return
+	} else {
+		canvasColour.value = colour;
+	}
+
+	if (sizeObject.value) {
+		sizeObject.value.style.backgroundColor = colour ? canvasColour.value : '#000000';
+	}
+
+}
+
+function localSave() {
+	const baseImage = JSON.stringify(canvas.value?.getAllStrokes());
+	localStorage.setItem('image', baseImage);
+}
+
+var timer: number | null = null;
+
+onMounted(() => {
+
+	timer = setInterval(() => {
+		localSave();
+	}, 5000);
+});
+
+onUnmounted(() => {
+	if (timer !== null) {
+		clearInterval(timer);
+	}
+});
+
+var initialImage = ref([]);
+function loadPrevious() {
+	const baseImage = localStorage.getItem('image');
+	if (baseImage?.includes('{')) {
+		initialImage.value = JSON.parse(baseImage);
+	}
+}
+
+function clearCanvas() {
+	canvas.value?.clear();
+	canvas.value?.reset();
+}
+
+loadPrevious();
+
+
+watch(brushRange, changeSizeObject);
+function changeSizeObject(newval: number) {
+	if (sizeObject.value) {
+		sizeObject.value.style.width = `${brushSize.value}px`;
+		sizeObject.value.style.height = `${brushSize.value}px`;
+	}
+}
+</script>
+
+<template>
+	<div class="content">
+		<div class="colour__picker" v-if="showColourPicker">
+			<Vue3ColorPicker v-model="canvasColour" :disable-history="true" :show-eye-drop="false"
+				:show-color-list="true" :show-alpha="true" :mode="'solid'" :show-buttons="true" :show-input-menu="false"
+				:show-input-set="false" :show-picker-mode="false" :theme="'dark'" @on-save="saveColour"
+				@on-cancel="showColourPicker = false" />
+		</div>
+
+
+		<div class="canvas">
+			<vue-drawing-canvas ref="canvas" :color="canvasColour" :line-width="brushSize" class="canvasObj"
+				:stroke-type="'dash'" :height="300" :width="300" :initial-image="initialImage" :line-join="'round'" />
+		</div>
+
+
+		<div class="toolbar">
+			<div class="toolbar__colours">
+
+
+				<div class="colour colour--picker" @click="showColourPicker = !showColourPicker">
+					<i class="pi pi-palette"></i>
+				</div>
+				<div class="colour red" @click="saveColour('#D22B2B')"></div>
+				<div class="colour blue" @click="saveColour('#0096FF')"></div>
+				<div class="colour black" @click="saveColour('#000000')"></div>
+				<div class="colour white" @click="saveColour('#FFFFFF')"></div>
+				<div class="colour purple" @click="saveColour('#800020')"></div>
+				<div class="colour green" @click="saveColour('#50C878')"></div>
+
+
+			</div>
+			<div class="toolbar__sizing">
+
+
+
+				<input type="range" v-model="brushRange" min="0" max="50" class="size__range">
+				<div class="size__container">
+					<div class="size__show" ref="sizeObject"></div>
+				</div>
+			</div>
+			<div class="toolbar__options">
+				<div class="option" @click="undoCanvas"><i class="pi pi-undo"></i></div>
+				<div class="option" @click="redoCanvas"><i class="pi pi-undo flip"></i></div>
+				<div class="option" @click="clearCanvas"><i class="pi pi-trash"></i></div>
+				<div class="option option--last" @click="saveCanvas"><i class="pi pi-send"></i></div>
+			</div>
+		</div>
+	</div>
+</template>
+
+<style scoped lang="css">
+.content {
+	width: 300px;
+	height: 100%;
+	margin: auto;
+	margin-top: 1rem;
+}
+
+.colour__picker {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+
+
+.canvas {
+	width: fit-content;
+	height: fit-content;
+	margin: auto;
+}
+
+.toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	width: 100%;
+	margin-top: .5rem;
+}
+
+.toolbar__colours {
+	display: flex;
+	gap: .75rem;
+	justify-content: center;
+
+}
+
+.colour {
+	height: 2rem;
+	width: 2rem;
+	border-radius: 8px;
+}
+
+.colour--picker {
+	background-color: var(--clr-surface-a20);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+}
+
+
+
+/* Size Slider */
+.toolbar__sizing {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: center;
+	min-height: 60px;
+}
+
+.toolbar__options {
+	display: flex;
+	gap: .75rem;
+}
+
+.size__range {
+	accent-color: black;
+}
+
+.size__container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width: 60px;
+}
+
+.size__show {
+	background-color: black;
+	height: 5px;
+	width: 5px;
+	border-radius: 50%;
+
+}
+
+.option {
+	height: 2rem;
+	width: 2rem;
+	background-color: var(--clr-surface-a20);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: 8px;
+
+}
+
+.toolbar__options .option--last {
+	margin-left: auto;
+}
+
+.flip {
+	transform: rotateY(180deg);
+}
+
+
+/* .colours {
+	display: flex;
+	gap: 1rem;
+	width: 100%;
+}
+
+.reverse {
+	
+}
+
+
+.actions {
+	margin-top: 0.5rem;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+}
+
+.content {
+	margin: auto;
+	margin-top: 1rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	width: fit-content;
+} */
+
+.red {
+	background-color: #D22B2B;
+}
+
+.blue {
+	background-color: #0096FF;
+}
+
+.black {
+	background-color: black;
+}
+
+.white {
+	background-color: white;
+}
+
+.purple {
+	background-color: #800020;
+}
+
+.green {
+	background-color: #50C878;
+}
+</style>
