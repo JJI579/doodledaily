@@ -39,15 +39,13 @@ async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_
 		raise HTTPException(status_code=400, detail="User ID is required")
 	userID = int(userID)
 	if implementFriend:
-		resp = await session.execute(
-			select(
+		statement = select(
 				User,
 				case(
 					(Friend.status == "accepted", 1),
 					else_=0
 				).label("isFriend")
-			)
-			.join(
+			).join(
 				Friend,
 				and_(
 					or_(Friend.senderID == current_user.userID, Friend.receiverID == current_user.userID),
@@ -58,9 +56,9 @@ async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_
 					)
 				),
 				isouter=True
-			)
-			.where(User.userID == userID)
-		)
+			).where(User.userID == userID)
+		resp = await session.execute(statement)
+			
 		test = [ExtendedUserFetch(
 			userID=user.userID,
 			userName=user.userName,
@@ -80,9 +78,17 @@ async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_
 	
 		
 @router.get('/fetch')
-async def fetchUsers(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[RequestFetch]:
-	resp = await session.execute(select(
-		User.userID, User.userName, User.userCreatedAt, Friend.status
-	).join(Friend, Friend.receiverID == User.userID, isouter=True))
+async def fetchUsers(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[RequestFetch]:
+	
+	query = request.query_params.get('q')
+	if query:
+		statement = select(
+			User.userID, User.userName, User.userCreatedAt, Friend.status
+		).join(Friend, Friend.receiverID == User.userID, isouter=True).where(User.userName.like(f"%{query}%"))
+	else:
+		statement = select(
+			User.userID, User.userName, User.userCreatedAt, Friend.status
+		).join(Friend, Friend.receiverID == User.userID, isouter=True)
+	resp = await session.execute(statement)
 	# print(resp.all())
 	return [RequestFetch(status=user.status if user.status else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user in resp.all() if user.userID != current_user.userID]

@@ -45,7 +45,7 @@ async def requestFriend(request: Request, user: Annotated[User, Depends(get_curr
 		# create request 
 		session.add(Friend(senderID=user.userID, receiverID=receiverID, status="pending"))
 		tokens = await fetchNotificationTokens(receiverID)
-		await dispatchNotification(tokens, f"{user.userName} has requested you as a friend!")
+		await dispatchNotification(tokens, f"{user.userName} has requested you as a friend!", "/notifications")
 		await session.commit()
 		return Response(status_code=204)
 
@@ -68,7 +68,7 @@ async def acceptFriend(request: Request, user: Annotated[User, Depends(get_curre
 	await session.commit()
 	if result.first():
 		tokens = await fetchNotificationTokens(senderID)
-		await dispatchNotification(tokens, f"{user.userName} accepted your friend request!")
+		await dispatchNotification(tokens, f"{user.userName} accepted your friend request!", "/notifications")
 		return {
 			'detail': "Accepted Friend!"
 		}
@@ -94,7 +94,7 @@ async def declineFriend(request: Request, user: Annotated[User, Depends(get_curr
 	await session.commit()
 	if result.first():
 		tokens = await fetchNotificationTokens(senderID)
-		await dispatchNotification(tokens, f"{user.userName} declined your friend request :(")
+		await dispatchNotification(tokens, f"{user.userName} declined your friend request :(", "/notifications")
 		return {
 			'detail': "Declined Friend"
 		}
