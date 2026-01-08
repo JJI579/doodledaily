@@ -223,7 +223,15 @@ async def likeComment(request: Request, current_user: Annotated[User, Depends(ge
 	else:
 		session.add(LikeComment(commentID=commentID, userID=current_user.userID, isLiked=True))
 		await session.commit()
-		return {
-			"detail": "Liked comment"
-		}
+
+	commentRes = await session.execute(select(Comment).where(Comment.commentID == commentID))
+	comment = commentRes.scalar_one_or_none()
+	if not comment:
+		raise HTTPException(status_code=404, detail="Comment not found")
+	if comment.userID != current_user.userID: # type: ignore
+		tokens = await fetchNotificationTokens(comment.userID) # type: ignore
+		await dispatchNotification(tokens, f"{current_user.userName} liked your comment on pibble post!", f"photos?showComment={commentID}")
+	return {
+		"detail": "Liked comment"
+	}	
 		
