@@ -49,7 +49,6 @@ function showComments(comment: number) {
 
 
 const user = ref<UserReturn | null>(null);
-
 onMounted(async () => {
 	// Fetch Images
 	await fetchImages();
@@ -64,11 +63,11 @@ onMounted(async () => {
 	}
 });
 
+
 const username = computed(() => {
 	if (!user.value) return "";
 	return user.value.userName.slice(0, 1).toUpperCase() + user.value.userName.slice(1)
 })
-
 
 
 </script>
