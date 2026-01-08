@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from contextlib import asynccontextmanager
 from database import init_db, close_db
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,6 +53,32 @@ async def tempDebug(tempData: tempForm):
 	return {
 		"detail": "ok"
 	}
+
+
+class WebsocketManager:
+
+	
+	def __init__(self) -> None:
+		self.connections = []
+
+	async def connect(self, websocket: WebSocket):
+		await websocket.accept()
+		self.connections.append(websocket)
+		websocket.tester = "hello"
+	
+	async def broadcast(self, message: str):
+		# NEED TO MAKE THIS PERSONALISED PER CONNECTION
+		for connection in self.connections:
+			await connection.send_text(message)
+
+
+manager = WebsocketManager()
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+	await manager.connect(websocket)
+	while True:
+		data = await websocket.receive_text()
+		await websocket.send_text(f"Message text was: {data}")	
 
 
 from routes import users, auth, friends, photos, notifications

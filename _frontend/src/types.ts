@@ -1,3 +1,6 @@
+
+const debug = true;
+
 type PhotoReturn = {
 	photoID: number;
 	photoName: string;
@@ -35,4 +38,5 @@ type Notification = {
 	type: string
 }
 
+export default debug;
 export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification };

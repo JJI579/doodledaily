@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 import router from './router';
+import debug from './types';
 
-const debug: boolean = true;
 const BASE_URL = debug ? 'http://127.0.0.1:8000' : 'https://pibble.pics/api';
 
 const api: AxiosInstance = axios.create({

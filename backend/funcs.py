@@ -16,7 +16,6 @@ JWTToken = TypedDict('JWTToken', {
 })
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 jwtAuthentication = Authentication()
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: AsyncSession = Depends(get_session)):

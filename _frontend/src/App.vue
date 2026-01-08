@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import router from './router';
 import api from './api';
 import { enableNotifications } from './firebase';
-
+import { useWebsocket } from './Websocket';
 
 const addBackButton = computed(() => router.currentRoute.value.name !== "Photos");
 
@@ -13,6 +13,7 @@ function notificationsPage() {
 
 
 onMounted(async () => {
+	const websocket = useWebsocket();
 
 
 	// forces update incase app has been updated.

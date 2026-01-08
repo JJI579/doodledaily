@@ -36,8 +36,8 @@ async def savePhoto(photoData: PhotoCreate, current_user: Annotated[User, Depend
 	))
 	results = resp.scalars().all()
 	if results:
-		friend_ids = [x.senderID if x.senderID != current_user.userID else x.receiverID for x in results]
-		tokens = await fetchNotificationTokens(*friend_ids)
+		friend_ids = [x.senderID if x.senderID != current_user.userID else x.receiverID for x in results] # type: ignore
+		tokens = await fetchNotificationTokens(*friend_ids) # type: ignore
 		await dispatchNotification(tokens, f"{current_user.userName} has posted a Pibble!")
 
 	await session.commit()

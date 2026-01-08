@@ -1,0 +1,4 @@
+create websocket so when on app, live updates come through
+
+update counters of comments etc 
+
