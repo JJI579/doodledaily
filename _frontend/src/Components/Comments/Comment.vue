@@ -41,10 +41,11 @@ const relativeTime = computed(() => {
 const hasLiked = ref(props.comment.hasLiked);
 
 async function likeComment() {
-	if (hasLiked) return;
+	if (hasLiked.value) return;
 	const resp = await api.post(`/photos/${props.comment.photoID}/comments/${props.comment.commentID}/like`);
 	if ('detail' in resp.data) {
 		props.comment.likeCount++;
+		hasLiked.value = true
 	}
 }
 onMounted(async () => {
