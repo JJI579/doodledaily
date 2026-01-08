@@ -22,9 +22,6 @@ photosDir.mkdir(exist_ok=True)
 
 @router.post('/create')
 async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)):
-	
-
-	
 	photoName = f"{secrets.token_urlsafe(64)}.png"
 	
 	with open(photosDir / photoName, "wb") as f:
