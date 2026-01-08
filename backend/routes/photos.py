@@ -83,13 +83,13 @@ async def fetchPhotos(current_user: Annotated[User, Depends(get_current_user)], 
 		.where(Photo.isDeleted == False, or_(
 			friend_exists,
 			Photo.photoOwnerID == current_user.userID
-		))
+		)).limit(20).order_by(Photo.photoCreatedAt.desc())
     )
 	result = await session.execute(statement)
 	x =  [
 		LikesPhotoReturn(commentCount=commentcount, photoData=photo.photoData, photoCreatedAt=photo.photoCreatedAt, photoID=photo.photoID, photoName=photo.photoName, photoOwnerID=photo.photoOwnerID, photoType=photo.photoType, isFavourited=is_fav, likesCount=likescount) for photo, is_fav, likescount, commentcount in result.all()
 	]
-	return list(reversed(x))
+	return x
 
 
 @router.post('/{photo_id}/delete')
@@ -141,13 +141,13 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 		comment=commentData.comment
 	)
 	
-	tokens = await fetchNotificationTokens(photoObj.photoOwnerID) # type: ignore
-	# TODO: make notification with change to notifications page.
-	print(tokens)
 	session.add(commentModel)
 	await session.commit()
 	await session.refresh(commentModel)
-	await dispatchNotification(tokens, f"{current_user.userName} commented on your pibble post!", f"photos?showComment={commentModel.commentID}")
+	
+	if photoObj.photoOwnerID != USER_ID: # type: ignore
+		tokens = await fetchNotificationTokens(photoObj.photoOwnerID) # type: ignore
+		await dispatchNotification(tokens, f"{current_user.userName} commented on your pibble post!", f"photos?showComment={commentModel.commentID}")
 	return commentModel
 
 @router.get('/{photo_id}/fetch')

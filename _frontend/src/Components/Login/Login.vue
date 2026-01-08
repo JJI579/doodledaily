@@ -21,16 +21,19 @@ const login = async () => {
 		return;
 	}
 
-	let data: AxiosResponse;
+	let data: any;
 
 	try {
 		data = (await api.post('/login', {
 			username: username.value,
 			password: password.value,
 		})).data;
-		localStorage.setItem('token', data.token);
-		localStorage.setItem('refresh_token', data.refresh_token);
-		localStorage.setItem('userID', data.id);
+		if ("token" in data && "refresh_token" in data && "id" in data) {
+			localStorage.setItem('token', String(data.token));
+			localStorage.setItem('refresh_token', String(data.refresh_token));
+			localStorage.setItem('userID', String(data.id));
+		}
+
 	} catch (err: any) {
 
 		if (err.response?.data?.detail) {

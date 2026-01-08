@@ -64,6 +64,8 @@ function wasHold() {
 	const seconds = (compare - holdStart.value) / 1000
 	if (seconds > .5) {
 		router.push({ name: 'Debug' })
+	} else {
+		window.location.reload();
 	}
 }
 

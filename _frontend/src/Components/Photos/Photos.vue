@@ -48,7 +48,7 @@ function showComments(comment: number) {
 }
 
 
-const user = ref({});
+const user = ref({ userName: "" });
 
 onMounted(async () => {
 	// Fetch Images
@@ -76,7 +76,7 @@ onMounted(async () => {
 		<div class="isTime">
 			<p class="isTime__text">Hey {{ user.userName }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
-				Start Design!
+				Draw<i class="pi pi-pencil"></i>
 			</button>
 		</div>
 		<div class="photos">
@@ -114,6 +114,7 @@ onMounted(async () => {
 	border-radius: 3px;
 	padding: 5px;
 	margin-block: 0.5rem;
+	border-radius: 8px;
 }
 
 .isTime__text {
@@ -122,11 +123,26 @@ onMounted(async () => {
 	margin-bottom: 0.5rem;
 }
 
-.long {
-	width: 85%;
-	background-color: var(--clr-surface-a20);
+.action__button {
+	background-color: #3a4f7a;
 	color: var(--clr-light-a0);
 	margin-bottom: 1rem;
+	height: 2.5rem;
+	border-radius: 10px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: .5rem;
+	font-size: large;
+	border: 2px solid var(--clr-info-a20);
+}
+
+.action__button i {
+	color: var(--clr-info-a20);
+}
+
+.long {
+	width: 80%;
 }
 
 .popup {
