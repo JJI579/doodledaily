@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlmodel import select
+from sqlmodel import select, and_, or_, exists
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, Photo, Comment, Favourite
+from models import User, Photo, Comment, Favourite, Friend
 from funcs import get_current_user, get_session
 from sqlalchemy import case, func
 from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn
@@ -24,12 +24,42 @@ async def savePhoto(photoData: PhotoCreate, current_user: Annotated[User, Depend
 	)
 
 	session.add(photoObject)
+	
+	resp = await session.execute(select(Friend).where(
+		and_(
+			or_(
+			Friend.senderID == current_user.userID,
+			Friend.receiverID == current_user.userID
+		),
+		Friend.status == "accepted"
+		)
+	))
+	results = resp.scalars().all()
+	if results:
+		friend_ids = [x.senderID if x.senderID != current_user.userID else x.receiverID for x in results]
+		tokens = await fetchNotificationTokens(*friend_ids)
+		await dispatchNotification(tokens, f"{current_user.userName} has posted a Pibble!")
+
 	await session.commit()
 
 @router.get('/fetch')
 async def fetchPhotos(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> list[LikesPhotoReturn]:
 
-
+	friend_exists = exists().where(
+		and_(
+			# Friend.status == "accepted",
+			or_(
+				and_(
+					Friend.senderID == current_user.userID,
+					Friend.receiverID == Photo.photoOwnerID,
+				),
+				and_(
+					Friend.receiverID == current_user.userID,
+					Friend.senderID == Photo.photoOwnerID,
+				),
+			),
+		)
+	)
 	statement = (
         select(
             Photo,
@@ -50,26 +80,9 @@ async def fetchPhotos(current_user: Annotated[User, Depends(get_current_user)], 
             Photo.photoData,
             Photo.photoOwnerID
         )
-		.where(Photo.isDeleted == False)
+		.where(Photo.isDeleted == False, friend_exists)
     )
-
-	# statement = (
-	# 	select(
-	# 		Photo,
-	# 		# case({Favourite.isFavourited == True: 1}, else_=0).label("isFavourited"),
-	# 		# func.count(Favourite.photoID).label('likes_count')
-	# 	)
-	# 	# TODO: reenable as today
-	# 	# .where(func.date(Photo.photoCreatedAt) == func.current_date())
-	# 	# .join(
-	# 	# 	Favourite,
-	# 	# 	(Photo.photoID == Favourite.photoID),
-	# 	# 	isouter=False
-	# 	# )
-	# 	# .group_by(Photo.photoID)
-	# )
 	result = await session.execute(statement)
-	
 	x =  [
 		LikesPhotoReturn(commentCount=commentcount, photoData=photo.photoData, photoCreatedAt=photo.photoCreatedAt, photoID=photo.photoID, photoName=photo.photoName, photoOwnerID=photo.photoOwnerID, photoType=photo.photoType, isFavourited=is_fav, likesCount=likescount) for photo, is_fav, likescount, commentcount in result.all()
 	]
@@ -131,7 +144,7 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	session.add(commentModel)
 	await session.commit()
 	await session.refresh(commentModel)
-	await dispatchNotification(tokens, f"{current_user.userName} commented on your pibble post!", f"photos/showComment={commentModel.commentID}")
+	await dispatchNotification(tokens, f"{current_user.userName} commented on your pibble post!", f"photos?showComment={commentModel.commentID}")
 	return commentModel
 
 @router.get('/{photo_id}/fetch')

@@ -1,6 +1,6 @@
 
 
-from database import engine, Base, AsyncSessionLocal
+from database import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException
 from typing import TypedDict, Annotated
@@ -18,10 +18,6 @@ JWTToken = TypedDict('JWTToken', {
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 jwtAuthentication = Authentication()
-
-async def get_session():
-	async with AsyncSessionLocal() as session:
-		yield session
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: AsyncSession = Depends(get_session)):
 	credentialsException = HTTPException(status_code=401, detail="Invalid or expired Bearer Token")

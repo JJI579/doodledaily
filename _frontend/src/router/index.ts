@@ -7,6 +7,7 @@ import User from '@/Components/User/User.vue';
 import Notifications from '@/Components/Notifications/Notifications.vue';
 import Comments from '@/Components/Comments/Comments.vue';
 import Debug from '@/Components/Debug.vue';
+import Search from '@/Components/Search/Search.vue';
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,6 +46,11 @@ const router = createRouter({
 			path: '/debug',
 			name: 'Debug',
 			component: Debug
+		},
+		{
+			path: '/search',
+			name: 'Search',
+			component: Search
 		}
 	],
 });

@@ -14,6 +14,9 @@ class UserFetch(BaseModel):
 	class Config:
 		from_attributes = True
 
+class RequestFetch(UserFetch):
+	status: str
+
 class ExtendedUserFetch(UserFetch):
 	isFriend: bool
 

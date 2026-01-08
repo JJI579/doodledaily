@@ -139,7 +139,8 @@ function removeParam() {
 .popup {
 	width: 100%;
 	height: 60vh;
-	background-color: var(--clr-surface-a10);
+	border: 2px solid var(--clr-surface-a10);
+	background-color: var(--clr-surface-a0);
 	top: 100%;
 	border-top-left-radius: 40px;
 	border-top-right-radius: 40px;

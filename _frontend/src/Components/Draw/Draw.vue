@@ -77,7 +77,7 @@ function localSave() {
 var timer: number | null = null;
 
 onMounted(() => {
-
+	canvasColour.value = '#000000';
 	timer = setInterval(() => {
 		localSave();
 	}, 5000);

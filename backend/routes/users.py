@@ -5,7 +5,7 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
 from funcs import get_current_user, get_session
-from .schema import UserFetch, ExtendedUserFetch
+from .schema import UserFetch, ExtendedUserFetch, RequestFetch
 from sqlalchemy import case, or_, and_
 from typing import Union
 
@@ -17,6 +17,17 @@ router = APIRouter(
 
 @router.get('/fetch/@me')
 async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> UserFetch:
+
+	fetchFriends = await session.execute(select(Friend).where(and_(
+		or_(
+			Friend.senderID == current_user.userID,
+			Friend.receiverID == current_user.userID
+		),
+		Friend.status == "accepted"
+	)))
+
+	allFriends = fetchFriends.scalars().all()
+	print(allFriends)
 	return current_user
 
 @router.get('/{user_id}/fetch')
@@ -40,7 +51,11 @@ async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_
 				Friend,
 				and_(
 					or_(Friend.senderID == current_user.userID, Friend.receiverID == current_user.userID),
-					Friend.status == "accepted"
+					or_(
+						Friend.status == "accepted",
+						Friend.status == "cancelled",
+						Friend.status == "declined"
+					)
 				),
 				isouter=True
 			)
@@ -64,4 +79,10 @@ async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_
 		return userObj
 	
 		
-
+@router.get('/fetch')
+async def fetchUsers(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[RequestFetch]:
+	resp = await session.execute(select(
+		User.userID, User.userName, User.userCreatedAt, Friend.status
+	).join(Friend, Friend.receiverID == User.userID, isouter=True))
+	# print(resp.all())
+	return [RequestFetch(status=user.status if user.status else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user in resp.all() if user.userID != current_user.userID]

@@ -1,0 +1,135 @@
+<script lang="ts" setup>
+import api from '@/api';
+import router from '@/router';
+
+
+
+const props = defineProps({
+	data: {
+		type: Object,
+		required: true
+	}
+})
+
+console.log(props.data.userName, props.data.status)
+
+async function requestUser() {
+	const resp = await api.post(`/friends/${props.data.userID}/request`)
+	if (resp.status == 204) {
+		props.data.status = "pending"
+	}
+}
+
+async function cancelRequest() {
+	const resp = await api.post(`/friends/${props.data.userID}/cancel`)
+	console.log(resp.data)
+	if ("detail" in resp.data) {
+		props.data.status = "cancelled"
+	}
+}
+
+</script>
+
+
+
+<template>
+
+	<div class="result">
+
+		<div class="result__wrapper">
+
+			<div class="text" @click="() => router.push({ name: 'user', query: { id: props.data.userID } })">
+				<div class="image">
+					<img class="img" :src="props.data.userPhoto ?? 'pwa-64x64.png'">
+				</div>
+				<div class="name">
+					{{ props.data.userName }}
+				</div>
+			</div>
+
+			<div class="actions">
+				<button class="action" @click="requestUser()"
+					v-if="props.data.status == 'none' || props.data.status == 'declined' || props.data.status == 'cancelled'">
+					<i class="pi pi-user-plus"></i>
+				</button>
+				<button class="action action--cancel" @click="cancelRequest()"
+					v-else-if="props.data.status == 'pending'">
+					Cancel
+				</button>
+				<div v-else class="action action--friend">
+					<i class="pi pi-users"></i>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</template>
+
+
+<style lang="css" scoped>
+.result {
+	display: flex;
+	border: 2px solid var(--clr-surface-a10);
+	border-radius: 5px;
+	box-sizing: border-box;
+	height: 3rem;
+	width: 100%;
+	margin: auto;
+}
+
+.result__wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: auto;
+	width: 95%;
+}
+
+.text {
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+}
+
+.image {
+	height: 32px;
+	width: 32px;
+}
+
+.img {
+	height: 100%;
+	width: 100%;
+	object-fit: cover;
+}
+
+.name {}
+
+.actions {}
+
+.action {
+	height: 2rem;
+	width: 2rem;
+	border: none;
+	border-radius: 8px;
+	background-color: var(--clr-surface-a0);
+	border: 2px solid white;
+	box-sizing: border-box;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.action i {
+	font-size: 16px;
+	color: white;
+}
+
+.action--friend {
+	border: none;
+}
+
+.action--cancel {
+	width: fit-content;
+	color: white
+}
+</style>

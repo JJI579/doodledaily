@@ -18,7 +18,7 @@ firebase_admin.initialize_app(cred)
 async def dispatchNotification(tokens: list, text: str, urlSuffix: str="photos"):
 	if not tokens:
 		return
-
+	# sss
 	message = messaging.MulticastMessage(
 		tokens=tokens,
 		webpush=messaging.WebpushConfig(

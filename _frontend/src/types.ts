@@ -28,4 +28,11 @@ type FriendUserReturn = UserReturn & {
 	isFriend: boolean;
 };
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn };
+type Notification = {
+	name: string
+	description: string
+	createdAt: string
+	type: string
+}
+
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification };

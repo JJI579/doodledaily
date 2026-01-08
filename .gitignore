@@ -30,7 +30,7 @@ coverage
 
 # Backend
 
-backend/venv/
+venv
 serviceAccountKey.json
 .env
 __pycache__/

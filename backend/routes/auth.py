@@ -18,7 +18,6 @@ router = APIRouter(
 
 jwtAuthentication = Authentication()
 async def fetchNotificationTokens(*users: int) -> list[str]:
-	print(users)
 	async for session in get_session():
 	
 		tokens = []

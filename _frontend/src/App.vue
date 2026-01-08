@@ -13,6 +13,23 @@ function notificationsPage() {
 
 
 onMounted(async () => {
+
+
+	// forces update incase app has been updated.
+	var lastRefreshed = localStorage.getItem('last_refreshed');
+	if (lastRefreshed == null || lastRefreshed == '') {
+		localStorage.setItem('last_refreshed', new Date().getTime().toString());
+		window.location.reload();
+	} else {
+		var dateObj = new Date(lastRefreshed)
+		// if more than an hour ago
+		if (new Date().getTime() - dateObj.getTime() > 60 * 60 * 1000) {
+			localStorage.setItem('last_refreshed', new Date().getTime().toString());
+			window.location.reload();
+		}
+	}
+
+
 	if (localStorage.getItem('userID') == null) {
 		const resp = await api.get('/users/fetch/@me')
 		localStorage.setItem('userID', resp.data.userID)
@@ -61,9 +78,10 @@ function wasHold() {
 					@touchstart="holdStart = new Date().getTime()" @touchend="wasHold">Pib's Pics</h3>
 			</div>
 
-			<div class="end">
-				<div class="menu__button temp" @click="refresh()"><i class="pi pi-undo"></i></div>
-				<div class="menu__button" @click="notificationsPage()" v-if="!addBackButton"><i class="pi pi-bell"></i>
+			<div class="end" v-if="!addBackButton">
+				<div class="menu__button temp" @click="() => router.push({ name: 'Search' })"><i
+						class="pi pi-search"></i></div>
+				<div class="menu__button" @click="notificationsPage()"><i class="pi pi-bell"></i>
 				</div>
 			</div>
 		</div>
@@ -74,7 +92,7 @@ function wasHold() {
 <style lang="css" scoped>
 .menu {
 	width: 100%;
-	background-color: var(--clr-surface-a10);
+	background-color: var(--clr-surface-a0);
 	position: sticky;
 	top: 0;
 	z-index: 99999;

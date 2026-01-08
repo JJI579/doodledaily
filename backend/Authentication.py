@@ -8,7 +8,7 @@ cwd = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/')
 
 
 class Authentication:
-
+	
     def __init__(self):
         secret_key = os.getenv('SECRET_KEY')
         if secret_key is None:

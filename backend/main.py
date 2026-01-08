@@ -1,20 +1,18 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from database import engine, Base
+from database import init_db, close_db
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from typing import Annotated
-import hashlib
 from pathlib import Path
-import secrets
 
 currentPath = Path.cwd()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-	async with engine.begin() as conn:
-		await conn.run_sync(Base.metadata.create_all)
+	await init_db()
+	# async with engine.begin() as conn:
+	# 	await conn.run_sync(Base.metadata.create_all)
 	yield
+	await close_db()
 
 app = FastAPI(title="Basic FastAPI", lifespan=lifespan)
 
@@ -24,7 +22,7 @@ origins = [
 	"https://pibble.pics/api",
 	"https://pibble.pics",
 ]
-
+# this is great
 app.add_middleware(
 	CORSMiddleware,
 	allow_origins=origins,      # explicit allowed origins
@@ -57,8 +55,9 @@ async def tempDebug(tempData: tempForm):
 	}
 
 
-from routes import friends, photos, users, auth
+from routes import users, auth, friends, photos, notifications
 
+app.include_router(notifications.router)
 app.include_router(users.router)
 app.include_router(friends.router)
 app.include_router(photos.router)

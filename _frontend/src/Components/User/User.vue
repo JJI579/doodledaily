@@ -19,8 +19,11 @@ onMounted(async () => {
 	} else {
 		userID.value = Number(userParam)
 		const resp = await api.get(`/users/${userParam}/fetch?checkfriend=true`)
+		console.log(resp)
 		user.value = resp.data
+
 	}
+
 })
 
 const photoData = "true"
