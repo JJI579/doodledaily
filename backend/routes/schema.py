@@ -16,6 +16,7 @@ class UserFetch(BaseModel):
 
 class RequestFetch(UserFetch):
 	status: str
+	wasSent: bool
 
 class ExtendedUserFetch(UserFetch):
 	isFriend: bool

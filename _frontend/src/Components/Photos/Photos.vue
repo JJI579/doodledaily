@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, Teleport, type Ref, nextTick, computed } from 'vue';
 import Photo from './Photo.vue';
-import { UserReturn, type PhotoReturn } from '../../types';
+import { type UserReturn, type PhotoReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
 import PopupComment from './PopupComment.vue';
