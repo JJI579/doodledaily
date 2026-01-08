@@ -76,7 +76,7 @@ onMounted(async () => {
 		<div class="isTime">
 			<p class="isTime__text">Hey {{ user.userName }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
-				Start Design!
+				Draw<i class="pi pi-pencil"></i>
 			</button>
 		</div>
 		<div class="photos">
@@ -122,10 +122,23 @@ onMounted(async () => {
 	margin-bottom: 0.5rem;
 }
 
-.long {
-	width: 85%;
-	background-color: var(--clr-surface-a20);
+.action__button {
+	display: flex;
+	gap: .5rem;
+	height: 2rem;
+	justify-content: center;
+	align-items: center;
+	font-size: 15px;
+	border: none;
+	border-radius: 8px;
+	background-color: #007bff;
 	color: var(--clr-light-a0);
+	border: 3px solid #0D3F74;
+	cursor: pointer;
+}
+
+.long {
+	width: 80%;
 	margin-bottom: 1rem;
 }
 
