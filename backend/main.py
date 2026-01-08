@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from database import init_db, close_db
+from database import init_db, close_db, init_db_sync
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -10,6 +10,7 @@ currentPath = Path.cwd()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+	init_db_sync()
 	await init_db()
 	# async with engine.begin() as conn:
 	# 	await conn.run_sync(Base.metadata.create_all)

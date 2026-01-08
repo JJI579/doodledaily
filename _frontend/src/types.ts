@@ -24,6 +24,8 @@ type CommentReturn = {
 	userID: number;
 	comment: string;
 	createdAt: Date;
+	likeCount: number
+	hasLiked: boolean
 };
 
 type UserReturn = {

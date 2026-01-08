@@ -40,6 +40,9 @@ class CommentReturn(BaseModel):
 	userID: int
 	comment: str
 	createdAt: datetime.datetime
+	likeCount: int
+	hasLiked: bool
+
 
 class CommentCreate(BaseModel):
 	comment: str
