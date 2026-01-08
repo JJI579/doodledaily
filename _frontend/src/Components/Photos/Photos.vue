@@ -85,7 +85,7 @@ const username = computed(() => {
 		</div>
 		<div class="photos">
 			<Photo :photo="photo" v-for="photo in images" class="photo" @selectmenu="toggleOptions"
-				@comment="showComments" />
+				@comment="showComments" :key="photo.photoID" />
 		</div>
 		<Teleport to="body">
 			<div class="popup__wrapper">
