@@ -33,7 +33,11 @@ async function deletePost() {
 	if ('detail' in resp.data) {
 		showOptions.value = false
 		setTimeout(() => {
-			fetchImages();
+			nextTick().then(() => {
+				fetchImages();
+			}
+			);
+
 		}, 1000);
 	}
 

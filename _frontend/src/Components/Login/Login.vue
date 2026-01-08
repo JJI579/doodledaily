@@ -2,6 +2,7 @@
 import api from '@/api';
 import { enableNotifications } from '@/firebase';
 import router from '@/router';
+import type { LoginReturn } from '@/types';
 import type { AxiosError, AxiosResponse } from 'axios';
 import { onMounted, ref } from 'vue';
 api
@@ -21,16 +22,17 @@ const login = async () => {
 		return;
 	}
 
-	let data: AxiosResponse;
+	let data: LoginReturn;
 
 	try {
 		data = (await api.post('/login', {
 			username: username.value,
 			password: password.value,
 		})).data;
+
 		localStorage.setItem('token', data.token);
 		localStorage.setItem('refresh_token', data.refresh_token);
-		localStorage.setItem('userID', data.id);
+		localStorage.setItem('userID', String(data.id));
 	} catch (err: any) {
 
 		if (err.response?.data?.detail) {

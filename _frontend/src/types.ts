@@ -10,6 +10,14 @@ type PhotoReturn = {
 	commentCount: number;
 };
 
+type LoginReturn = {
+	type: string;
+	id: number;
+	token: string;
+	refresh_token: string;
+	expires_at: string;
+}
+
 type CommentReturn = {
 	commentID: number;
 	photoID: number;
@@ -35,4 +43,4 @@ type Notification = {
 	type: string
 }
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification };
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, LoginReturn };
