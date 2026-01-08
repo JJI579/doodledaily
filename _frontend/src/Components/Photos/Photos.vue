@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, Teleport, type Ref, nextTick, computed } from 'vue';
 import Photo from './Photo.vue';
-import type { PhotoReturn } from '../../types';
+import { UserReturn, type PhotoReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
 import PopupComment from './PopupComment.vue';
@@ -48,7 +48,7 @@ function showComments(comment: number) {
 }
 
 
-const user = ref({});
+const user = ref<UserReturn | null>(null);
 
 onMounted(async () => {
 	// Fetch Images
@@ -62,10 +62,12 @@ onMounted(async () => {
 		await nextTick();
 		showComments(commentID)
 	}
-
-
 });
 
+const username = computed(() => {
+	if (!user.value) return "";
+	return user.value.userName.slice(0, 1).toUpperCase() + user.value.userName.slice(1)
+})
 
 
 
@@ -74,7 +76,7 @@ onMounted(async () => {
 <template>
 	<div class="content">
 		<div class="isTime">
-			<p class="isTime__text">Hey {{ user.userName }}, draw?</p>
+			<p class="isTime__text">Hey {{ username }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
 				Draw<i class="pi pi-pencil"></i>
 			</button>
