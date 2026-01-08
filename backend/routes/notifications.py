@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlmodel import select, update, and_
+from sqlmodel import select, update, and_, or_
 from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,13 +26,41 @@ class NotificationReturn(BaseModel):
 
 @router.get('/')
 async def fetchNotifications(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[NotificationReturn]:
-	resp = await session.execute(select(Friend).where(
-		and_(
+	resp = await session.execute(select(Friend, User.userName).where(
+		or_(and_(
 			Friend.status == "pending",
 			Friend.receiverID == current_user.userID
+		),
+		and_(
+			Friend.status == "accepted",
+			or_(
+				Friend.receiverID == current_user.userID,
+				Friend.senderID == current_user.userID
+			)
+		))
+	).join(
+		User, 
+		or_(
+			and_(
+			Friend.senderID != current_user.userID,
+			Friend.senderID == User.userID
+		) ,
+		and_(
+			Friend.receiverID != current_user.userID,
+			Friend.receiverID == User.userID
+		) 
 		)
 	))
-	result = resp.scalars().all()
-	result: Sequence[Friend]
-	return [NotificationReturn(userID=FriendRequest.senderID, name="Friend Request", description=f"{FriendRequest.senderID} has requested to be your friend", createdAt=str(FriendRequest.createdAt), type="request") for FriendRequest in result] # type: ignore
+	results = resp.all()
+
+
+	def handleResult(values):
+		result, userName = values
+		result: Friend
+		if result.status == "pending": # type: ignore
+			return NotificationReturn(userID=result.senderID, name="Friend Request", description=f"{userName} has requested to be your friend", createdAt=str(result.createdAt), type="request") # type: ignore
+		elif result.status == "accepted": # type: ignore
+			return NotificationReturn(userID=result.senderID, name="Friends", description=f"You and {userName} are now friends", createdAt=str(result.createdAt), type="friends") # type: ignore
+		
+	return [handleResult(result) for result in results] # type: ignore
 

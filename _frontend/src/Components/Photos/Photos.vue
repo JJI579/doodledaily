@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-import { onMounted, ref, Teleport, type Ref, nextTick } from 'vue';
+import { onMounted, ref, Teleport, type Ref, nextTick, computed } from 'vue';
 import Photo from './Photo.vue';
 import type { PhotoReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
-import { enableNotifications } from '@/firebase';
 import PopupComment from './PopupComment.vue';
 
 
@@ -55,21 +54,35 @@ onMounted(async () => {
 	const commentParam = params.get('showComment')
 	if (commentParam != null) {
 		const commentID = Number(params.get('showComment'))
-		console.log("show comment", commentID)
 		await nextTick();
 		showComments(commentID)
 	}
-
-
-
 });
+
+
+const user = computed(() => {
+	var userStorage = localStorage.getItem('user')
+	if (userStorage == null) {
+		api.get('/users/fetch/@me').then((resp) => {
+			localStorage.setItem('user', JSON.stringify(resp.data))
+			var e = resp.data
+			e.userName = e.userName.charAt(0).toUpperCase() + e.userName.slice(1);
+			return e
+		})
+
+	} else {
+		var e = JSON.parse(userStorage)
+		e.userName = e.userName.charAt(0).toUpperCase() + e.userName.slice(1);
+		return e
+	}
+})
 
 </script>
 
 <template>
 	<div class="content">
 		<div class="isTime">
-			<p class="isTime__text">Upload your Photo of the day!</p>
+			<p class="isTime__text">Hey {{ user.userName }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
 				Start Design!
 			</button>

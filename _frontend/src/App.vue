@@ -35,7 +35,7 @@ onMounted(async () => {
 		localStorage.setItem('userID', resp.data.userID)
 	}
 
-	console.log('about to send')
+
 	try {
 		let platform: string = ""
 		const ua = navigator.userAgent

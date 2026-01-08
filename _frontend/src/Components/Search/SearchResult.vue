@@ -11,8 +11,6 @@ const props = defineProps({
 	}
 })
 
-console.log(props.data.userName, props.data.status)
-
 async function requestUser() {
 	const resp = await api.post(`/friends/${props.data.userID}/request`)
 	if (resp.status == 204) {
@@ -22,7 +20,6 @@ async function requestUser() {
 
 async function cancelRequest() {
 	const resp = await api.post(`/friends/${props.data.userID}/cancel`)
-	console.log(resp.data)
 	if ("detail" in resp.data) {
 		props.data.status = "cancelled"
 	}

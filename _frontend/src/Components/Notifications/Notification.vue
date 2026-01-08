@@ -6,7 +6,8 @@ import type { PropType } from 'vue';
 
 enum Colour {
 	red = "#D22B2B",
-	yellow = "#D2D22B"
+	yellow = "#D2D22B",
+	green = "#50C878"
 }
 
 const props = defineProps({
@@ -17,11 +18,13 @@ const props = defineProps({
 })
 
 const colour = () => {
-	console.log(props.data.type)
 	if (props.data.type === "request") {
 		return Colour.yellow
+	} else if (props.data.type == "friends") {
+		return Colour.green
 	} else {
 		return Colour.red
+
 	}
 }
 
@@ -29,7 +32,7 @@ async function acceptRequest() {
 	if ("userID" in props.data) {
 		const resp = await api.post(`/friends/${props.data.userID}/accept`)
 		if ('detail' in resp.data) {
-			console.log(resp.data.detail)
+			// Accepted
 		}
 	}
 }
@@ -52,7 +55,7 @@ async function acceptRequest() {
 				{{ props.data.description }}
 			</div>
 		</div>
-		<div class="actions">
+		<div class="actions" v-if="props.data.type == 'request'">
 			<button class="action decline">Decline</button>
 			<button class="action accept" @click="acceptRequest()">Accept</button>
 		</div>
@@ -95,7 +98,7 @@ async function acceptRequest() {
 }
 
 .status {
-	height: 90%;
+	height: 75%;
 	width: 2px;
 	border-radius: 10px;
 }
