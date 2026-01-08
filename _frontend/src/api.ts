@@ -34,8 +34,8 @@ api.interceptors.response.use(
 				if (refreshToken === null) {
 					localStorage.removeItem('token');
 					localStorage.removeItem('refresh_token');
-					router.push({ name: 'login' });
-					return Promise.reject();
+					router.push({ name: 'home' });
+					return Promise.reject(error);
 				}
 				const { data } = await axios.post(
 					`${BASE_URL}/refresh`,

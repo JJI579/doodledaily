@@ -84,11 +84,21 @@ async def fetchUsers(request: Request, current_user: Annotated[User, Depends(get
 	if query:
 		statement = select(
 			User.userID, User.userName, User.userCreatedAt, Friend.status
-		).join(Friend, Friend.receiverID == User.userID, isouter=True).where(User.userName.like(f"%{query}%"))
+		).join(Friend, and_(
+			Friend.receiverID == User.userID,
+			Friend.senderID == current_user.userID
+		), isouter=True).where(and_(
+			User.userName.like(f"%{query}%"),
+			User.deactivated==False
+		))
 	else:
 		statement = select(
 			User.userID, User.userName, User.userCreatedAt, Friend.status
-		).join(Friend, Friend.receiverID == User.userID, isouter=True)
+		).join(Friend, and_(
+			Friend.receiverID == User.userID,
+			Friend.senderID == current_user.userID
+		), isouter=True).where(User.deactivated==False)
 	resp = await session.execute(statement)
 	# print(resp.all())
+	# print([x.status for x in resp.all()])
 	return [RequestFetch(status=user.status if user.status else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user in resp.all() if user.userID != current_user.userID]

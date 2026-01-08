@@ -2,6 +2,7 @@
 import api from '@/api';
 import { enableNotifications } from '@/firebase';
 import router from '@/router';
+import type { AxiosError, AxiosResponse } from 'axios';
 import { onMounted, ref } from 'vue';
 api
 
@@ -20,45 +21,49 @@ const login = async () => {
 		return;
 	}
 
+	let data: AxiosResponse;
+
 	try {
-		const { data } = await api.post('/login', {
+		data = (await api.post('/login', {
 			username: username.value,
 			password: password.value,
-		});
-
-		if ('detail' in data) {
-			error.value = data.detail;
-			return;
-		}
-
-
+		})).data;
 		localStorage.setItem('token', data.token);
 		localStorage.setItem('refresh_token', data.refresh_token);
 		localStorage.setItem('userID', data.id);
-		try {
-			let platform: string = ""
-			const ua = navigator.userAgent
-			if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) platform = 'ios';
-			else if (/android/i.test(ua)) platform = 'android';
-			else platform = 'web';
-			const token = await enableNotifications();
-			if (token) {
-				await api.post('/token', { token: token, platform: platform });
-
-			} else {
-				console.log('No Token');
-			}
-		} catch (err) {
-			console.log(err)
-			return err
-		}
-
-
-		router.push({ name: 'Photos' });
 	} catch (err: any) {
-		console.error('Login failed', err.response?.data || err.message);
+
+		if (err.response?.data?.detail) {
+			error.value = err.response.data.detail;
+			return;
+		}
+	}
+
+
+
+
+
+
+	try {
+		let platform: string = ""
+		const ua = navigator.userAgent
+		if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) platform = 'ios';
+		else if (/android/i.test(ua)) platform = 'android';
+		else platform = 'web';
+		const token = await enableNotifications();
+		if (token) {
+			await api.post('/token', { token: token, platform: platform });
+		} else {
+			console.log('No Token');
+		}
+	} catch (err) {
+		console.log("eeeerr", err)
 		error.value = 'Login failed. Please try again.';
 	}
+
+
+	router.push({ name: 'Photos' });
+	window.location.reload()
 };
 
 const register = async () => {

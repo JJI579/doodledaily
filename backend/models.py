@@ -11,7 +11,7 @@ class User(Base):
 	userName = Column(String, unique=True, nullable=False)
 	userPassword = Column(String, nullable=False)
 	userCreatedAt = Column(DateTime, default=datetime.utcnow)
-
+	deactivated = Column(Boolean, default=False, nullable=False)
 	photos = relationship("Photo", back_populates="owner")
 	favourites = relationship(
 		"Favourite",

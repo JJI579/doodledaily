@@ -33,7 +33,9 @@ async function deletePost() {
 	if ('detail' in resp.data) {
 		console.log(resp.data.detail)
 		showOptions.value = false
-		await fetchImages();
+		setTimeout(() => {
+			fetchImages();
+		}, 1000);
 	}
 
 }
@@ -46,9 +48,12 @@ function showComments(comment: number) {
 }
 
 
+const user = ref({});
+
 onMounted(async () => {
 	// Fetch Images
 	await fetchImages();
+	user.value = (await api.get('/users/fetch/@me')).data
 
 	const params = new URLSearchParams(window.location.search);
 	const commentParam = params.get('showComment')
@@ -57,25 +62,12 @@ onMounted(async () => {
 		await nextTick();
 		showComments(commentID)
 	}
+
+
 });
 
 
-const user = computed(() => {
-	var userStorage = localStorage.getItem('user')
-	if (userStorage == null) {
-		api.get('/users/fetch/@me').then((resp) => {
-			localStorage.setItem('user', JSON.stringify(resp.data))
-			var e = resp.data
-			e.userName = e.userName.charAt(0).toUpperCase() + e.userName.slice(1);
-			return e
-		})
 
-	} else {
-		var e = JSON.parse(userStorage)
-		e.userName = e.userName.charAt(0).toUpperCase() + e.userName.slice(1);
-		return e
-	}
-})
 
 </script>
 

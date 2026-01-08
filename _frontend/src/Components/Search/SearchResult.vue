@@ -53,6 +53,7 @@ async function cancelRequest() {
 					v-else-if="props.data.status == 'pending'">
 					Cancel
 				</button>
+
 				<div v-else class="action action--friend">
 					<i class="pi pi-users"></i>
 				</div>

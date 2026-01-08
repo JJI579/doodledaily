@@ -35,5 +35,5 @@ serviceAccountKey.json
 .env
 __pycache__/
 old_
-app.db
+*.db
 

@@ -6,9 +6,13 @@ import api from '@/api';
 
 const notifications = ref([]);
 onMounted(async () => {
-	const resp = await api.get('/notifications')
-	notifications.value = resp.data
+	await loadNotifications()
 })
+
+async function loadNotifications() {
+	const resp = await api.get('/notifications/fetch')
+	notifications.value = resp.data
+}
 </script>
 
 
@@ -17,7 +21,7 @@ onMounted(async () => {
 	<div class="content">
 		<div class="notifications">
 
-			<Notification v-for="notification in notifications" :data="notification" />
+			<Notification v-for="notification in notifications" :data="notification" @refresh="loadNotifications()" />
 		</div>
 	</div>
 

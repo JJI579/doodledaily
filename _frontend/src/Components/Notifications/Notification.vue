@@ -28,13 +28,19 @@ const colour = () => {
 	}
 }
 
+const emit = defineEmits(['refresh'])
 async function acceptRequest() {
 	if ("userID" in props.data) {
 		const resp = await api.post(`/friends/${props.data.userID}/accept`)
 		if ('detail' in resp.data) {
 			// Accepted
+			emit('refresh')
 		}
 	}
+}
+
+function notAllow() {
+	alert('Never allowed to decline.')
 }
 </script>
 
@@ -56,7 +62,7 @@ async function acceptRequest() {
 			</div>
 		</div>
 		<div class="actions" v-if="props.data.type == 'request'">
-			<button class="action decline">Decline</button>
+			<button class="action decline" @click="notAllow()">Decline</button>
 			<button class="action accept" @click="acceptRequest()">Accept</button>
 		</div>
 

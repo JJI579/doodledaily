@@ -23,9 +23,12 @@ function redoCanvas() {
 
 
 
+const isSending = ref(false);
 
 const saveCanvas = async () => {
+	if (isSending.value) return;
 	if (!canvas.value) return;
+	isSending.value = true
 	const imageData = canvas.value.save();
 
 	try {
@@ -125,6 +128,9 @@ function changeSizeObject(newval: number) {
 
 
 		<div class="canvas">
+			<div class="overlay" v-if="isSending">
+				Uploading...
+			</div>
 			<vue-drawing-canvas ref="canvas" :color="canvasColour" :line-width="brushSize" class="canvasObj"
 				:stroke-type="'dash'" :height="300" :width="300" :initial-image="initialImage" :line-join="'round'" />
 		</div>
@@ -201,6 +207,19 @@ function changeSizeObject(newval: number) {
 	gap: .75rem;
 	justify-content: center;
 
+}
+
+.overlay {
+	height: 300px;
+	width: 300px;
+	position: absolute;
+	color: black;
+	background-color: rgba(0, 0, 0, 0.);
+	display: flex;
+	justify-content: center;
+	align-items: top;
+	font-weight: bold;
+	font-size: 50px;
 }
 
 .colour {

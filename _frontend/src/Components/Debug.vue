@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import api from '@/api';
 import { enableNotifications } from '@/firebase';
+import router from '@/router';
 import { onMounted, ref } from 'vue';
 
 
@@ -36,6 +37,13 @@ async function save() {
 	}
 
 }
+
+function logout() {
+	localStorage.removeItem('token');
+	localStorage.removeItem('refresh_token');
+	localStorage.removeItem('userID');
+	router.push({ name: 'home' });
+}
 </script>
 
 
@@ -44,6 +52,7 @@ async function save() {
 	<div class="content">
 
 		<h1>Debug</h1>
+		<button @click="logout()">logout</button>
 
 		<h2>Token</h2>
 		<p>{{ token }}</p>

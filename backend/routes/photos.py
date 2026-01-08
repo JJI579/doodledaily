@@ -80,7 +80,10 @@ async def fetchPhotos(current_user: Annotated[User, Depends(get_current_user)], 
             Photo.photoData,
             Photo.photoOwnerID
         )
-		.where(Photo.isDeleted == False, friend_exists)
+		.where(Photo.isDeleted == False, or_(
+			friend_exists,
+			Photo.photoOwnerID == current_user.userID
+		))
     )
 	result = await session.execute(statement)
 	x =  [

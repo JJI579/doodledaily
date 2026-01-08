@@ -24,12 +24,16 @@ class NotificationReturn(BaseModel):
 	userID: int
 
 
-@router.get('/')
+@router.get('/fetch')
 async def fetchNotifications(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[NotificationReturn]:
 	resp = await session.execute(select(Friend, User.userName).where(
-		or_(and_(
-			Friend.status == "pending",
-			Friend.receiverID == current_user.userID
+		or_(
+			and_(
+				Friend.status == "pending",
+				or_(
+					Friend.receiverID == current_user.userID,
+					Friend.senderID == current_user.userID
+				)
 		),
 		and_(
 			Friend.status == "accepted",
