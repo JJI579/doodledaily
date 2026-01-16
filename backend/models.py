@@ -109,6 +109,14 @@ class LikeComment(Base):
 	isLiked = Column(Boolean, default=False, nullable=False)
 	likedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+class PushCreated(Base):
+	__tablename__ = "tblPushCreated"
+
+	pushID = Column(Integer, primary_key=True, index=True)
+	pushTime = Column(DateTime, default=datetime.utcnow, nullable=False)
+	hasPushed = Column(Boolean, default=False, nullable=False)
+
+
 Photo.comments = relationship(
 	"Comment",
 	back_populates="photo",

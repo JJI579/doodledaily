@@ -36,7 +36,6 @@ async def dispatchNotification(tokens: list, text: str, urlSuffix: str="photos")
 				link="https://pibble.pics"+'/'+("photos" if not urlSuffix else urlSuffix)
 		)
 		),
-		
 	)
 
 	try:
