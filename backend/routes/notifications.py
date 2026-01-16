@@ -30,10 +30,7 @@ async def fetchNotifications(current_user: Annotated[User, Depends(get_current_u
 		or_(
 			and_(
 				Friend.status == "pending",
-				or_(
-					Friend.receiverID == current_user.userID,
-					Friend.senderID == current_user.userID
-				)
+				Friend.receiverID == current_user.userID
 		),
 		and_(
 			Friend.status == "accepted",
