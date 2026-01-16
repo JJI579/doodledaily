@@ -5,6 +5,8 @@ import { type UserReturn, type PhotoReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
 import PopupComment from './PopupComment.vue';
+import Popup from '../Popup/Popup.vue';
+import { usePopupModel } from '../Popup/popup';
 
 
 
@@ -73,15 +75,21 @@ const username = computed(() => {
 })
 
 
+const popupStore = usePopupModel();
+
 </script>
 
 <template>
 	<div class="content">
+
 		<div class="isTime">
 			<p class="isTime__text">Hey {{ username }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
 				Draw<i class="pi pi-pencil"></i>
+
+
 			</button>
+			<button @click="() => popupStore.showPopup('hello princess')">show modal</button>
 		</div>
 		<div class="photos">
 			<Photo :photo="photo" v-for="photo in images" class="photo" @selectmenu="toggleOptions"

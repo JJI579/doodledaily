@@ -18,6 +18,7 @@
 	"dependencies": {
 		"@vue/cli-plugin-pwa": "^5.0.9",
 		"axios": "^1.13.2",
+		"pinia": "^3.0.4",
 		"primeicons": "^7.0.0",
 		"vue": "^3.5.25",
 		"vue-router": "^4.6.3",
