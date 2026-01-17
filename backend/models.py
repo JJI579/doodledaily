@@ -29,7 +29,8 @@ class Token(Base):
 
 	# these are JWT Tokens
 	userID = Column(Integer, ForeignKey("tblUsers.userID"), primary_key=True, nullable=False)
-	tokenID = Column(String, primary_key=True, nullable=False)
+	bearerTokenID = Column(String, primary_key=True, nullable=False)
+	refreshTokenID = Column(String, primary_key=True, nullable=False)
 	createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
 	isActive = Column(Boolean, default=True, nullable=False)
 

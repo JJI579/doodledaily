@@ -31,7 +31,7 @@ async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], s
 			Friend.receiverID == User.userID
 		),
 		isouter=True
-	).group_by(User.userID)
+	).group_by(User.userID).distinct()
 	)
 
 	allFriends = fetchFriends.all()

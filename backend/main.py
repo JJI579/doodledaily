@@ -6,9 +6,9 @@ from fastapi.staticfiles import StaticFiles
 
 from pathlib import Path
 import json
-
-from sqlalchemy import select, and_
-from models import User, Token
+from WebsocketManager import manager
+from sqlalchemy import select, and_, or_
+from models import User, Token, Friend
 currentPath = Path.cwd()
 
 @asynccontextmanager
@@ -62,55 +62,47 @@ async def tempDebug(tempData: tempForm):
 	}
 
 
-
-
-class WebsocketManager:
-
-	
-	def __init__(self) -> None:
-		# user_id, {}
-		self.connections = {}
-		
-
-	async def connect(self, websocket: WebSocket):
-		pass
-	
-	async def broadcast(self, message: str):
-		# NEED TO MAKE THIS PERSONALISED PER CONNECTION
-		for connection in self.connections:
-			await connection.send_text(message)
-
-	async def identify(self, websocket: WebSocket, token: str):
-		# They are added to connection manager once they have sent through their bearer token for me to identify.
-		async for session in get_session():
-			resp = await session.execute(select(Token).where(and_(Token.tokenID == token, Token.isActive == True) ))
-			result = resp.scalar_one_or_none()
-			print(result)
-			if not result: 
-				return False
-			else:
-				pass
-		
-
-manager = WebsocketManager()
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
 	await websocket.accept()
 	while True:
 		# await websocket.send_text(f"Message text was: {data}")	
+		userIdentified = False
 		try:
-			hasIdentified = False
 			data = await websocket.receive_json()
-			if data.get('t', '') == "IDENTIFY" and not hasIdentified:
-				await manager.identify(websocket, data['d']['token'])
-			elif hasIdentified:
-				pass
+			packetType = data.get('t', '')
+			if packetType == "IDENTIFY" and not userIdentified:
+				identifyResponse = await manager.identify(websocket, data['d']['token'])
+				if not identifyResponse:
+					return await websocket.close()
+				userIdentified = identifyResponse
+				print(userIdentified)
+				websocket.user_id = userIdentified # pyright: ignore[reportAttributeAccessIssue]
+			elif userIdentified != False:
+				
+
+				print(packetType)
+				match packetType:
+
+					case "COMMENT_CREATE":
+						pass
+					
+					case "FRIEND_ACCEPT":
+						pass
+					
 			else:
 				# trying to send data without identifying
+				print("doing")
 				await websocket.close()
-
 		except:
-			pass
+			print("closing")
+			try:
+				potentialID	 = getattr(websocket, "user_id")
+				if potentialID:
+					await manager.remove(potentialID)
+			except AttributeError:
+				break
+			break
 			
 
 

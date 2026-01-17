@@ -32,5 +32,9 @@ export const useWebsocket = defineStore("", () => {
 		console.log(message)
 	};
 
-	return { websocket };
+	function disconnect() {
+		websocket.send(generatePacket('disconnect', {}))
+		websocket.close()
+	}
+	return { websocket, disconnect };
 })

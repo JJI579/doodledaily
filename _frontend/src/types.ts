@@ -1,5 +1,6 @@
 
-const debug = true;
+const debug = true
+export default debug;
 
 type PhotoReturn = {
 	photoID: number;

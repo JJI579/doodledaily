@@ -54,12 +54,12 @@ async def login(loginData: loginForm, session: AsyncSession = Depends(get_sessio
 
 		refresh_token = secrets.token_urlsafe(56)
 		while True:
-			if not (await session.execute(select(Token).where(Token.tokenID == refresh_token))).scalar_one_or_none() :
+			if not (await session.execute(select(Token).where(Token.bearerTokenID == refresh_token))).scalar_one_or_none():
 				break
 			else:
 				refresh_token = secrets.token_urlsafe(56)
 
-		refreshTokenObject = Token(tokenID=refresh_token, userID=user.userID, isActive=True)
+		refreshTokenObject = Token(refreshTokenID=refresh_token, bearerTokenID=accessToken, userID=user.userID, isActive=True)
 		session.add(refreshTokenObject)
 		await session.commit()
 
