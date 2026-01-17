@@ -26,8 +26,7 @@ async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], s
 		Friend.status == "accepted"
 	)))
 
-	allFriends = fetchFriends.scalars().all()
-	print(allFriends)
+	# allFriends = fetchFriends.scalars().all()
 	return current_user
 
 @router.get('/{user_id}/fetch')
