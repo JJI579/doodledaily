@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from database import init_db, close_db
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-
+import json
 currentPath = Path.cwd()
 
 @asynccontextmanager
@@ -55,30 +55,41 @@ async def tempDebug(tempData: tempForm):
 	}
 
 
+
+
 class WebsocketManager:
 
 	
 	def __init__(self) -> None:
-		self.connections = []
+		# user_id, {}
+		self.connections = {}
+		
 
 	async def connect(self, websocket: WebSocket):
-		await websocket.accept()
-		self.connections.append(websocket)
-		websocket.tester = "hello"
+		pass
 	
 	async def broadcast(self, message: str):
 		# NEED TO MAKE THIS PERSONALISED PER CONNECTION
 		for connection in self.connections:
 			await connection.send_text(message)
 
+	async def identify(self, websocket: WebSocket):
+		# They are added to connection manager once they have sent through their bearer token for me to identify.
+		pass
 
 manager = WebsocketManager()
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-	await manager.connect(websocket)
+	await websocket.accept()
 	while True:
-		data = await websocket.receive_text()
-		await websocket.send_text(f"Message text was: {data}")	
+		# await websocket.send_text(f"Message text was: {data}")	
+		try:
+			data = await websocket.receive_json()
+			print(data)
+		except:
+			pass
+			
+
 
 
 from routes import users, auth, friends, photos, notifications
