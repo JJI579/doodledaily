@@ -31,7 +31,7 @@ async def fetchNotificationTokens(*users: int) -> list[str]:
 
 @router.post('/refresh')
 async def refresh(refreshData: refreshForm, session: AsyncSession = Depends(get_session)):
-	resp = await session.execute(select(Token).where(Token.tokenID == refreshData.token))
+	resp = await session.execute(select(Token).where(Token.refreshTokenID == refreshData.token))
 	tokenData: Token = resp.scalars().first()
 	if tokenData:
 		accessToken, expiry = jwtAuthentication.create_access_token(tokenData.userID) # type: ignore
