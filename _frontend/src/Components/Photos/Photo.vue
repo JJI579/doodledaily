@@ -17,7 +17,7 @@ const props = defineProps({
 	},
 	user: {
 		type: Object as PropType<UserReturn>,
-		required: true
+		required: false
 	}
 });
 

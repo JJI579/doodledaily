@@ -56,7 +56,6 @@ onMounted(async () => {
 	// Fetch Images
 	user.value = (await api.get('/users/fetch/@me')).data
 	user.value?.friends.forEach((friend) => usersDict.value.set(friend.userID, friend))
-	console.log(usersDict.value)
 	await fetchImages();
 
 	const params = new URLSearchParams(window.location.search);
