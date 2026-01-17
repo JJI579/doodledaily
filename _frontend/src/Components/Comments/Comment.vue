@@ -38,6 +38,16 @@ const relativeTime = computed(() => {
 	return `${diffDays}d ago`;
 });
 
+const hasLiked = ref(props.comment.hasLiked);
+
+async function likeComment() {
+	if (hasLiked.value) return;
+	const resp = await api.post(`/photos/${props.comment.photoID}/comments/${props.comment.commentID}/like`);
+	if ('detail' in resp.data) {
+		props.comment.likeCount++;
+		hasLiked.value = true
+	}
+}
 onMounted(async () => {
 	try {
 		const { data } = await api.get(`/users/${props.comment.userID}/fetch`);
@@ -50,16 +60,24 @@ onMounted(async () => {
 
 <template>
 	<div class="comment">
-		<div class="left">
-			<div class="author">
-				<b>{{ user?.userName }}</b>
+		<div class="left__side">
+			<div class="left--content">
+				<div class="author">
+					<b>{{ user?.userName }}</b>
+				</div>
+				<div class="content">
+					{{ props.comment.comment }}
+				</div>
 			</div>
-			<div class="content">
-				{{ props.comment.comment }}
-			</div>
+
 		</div>
 		<div class="right">
 			<i>{{ relativeTime }}</i>
+			<div class="liked">
+				<i class="pi" @click="likeComment()" :class="{ 'pi-heart': !hasLiked, 'pi-heart-fill': hasLiked }"></i>
+				{{
+					props.comment.likeCount }}
+			</div>
 		</div>
 	</div>
 </template>
@@ -72,14 +90,34 @@ onMounted(async () => {
 	align-items: top;
 }
 
-.left {
+.left--content {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
 }
 
+.left__side {
+	display: flex;
+	flex-direction: column;
+	gap: .5rem;
+}
+
+
 .right {
 	color: var(--clr-surface-a50);
 	font-size: small;
+	display: flex;
+	justify-content: right;
+	text-align: right;
+	flex-direction: column;
+	gap: .5rem;
+}
+
+.liked {
+	color: white;
+}
+
+.liked i {
+	cursor: pointer;
 }
 </style>

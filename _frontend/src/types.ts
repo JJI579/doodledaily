@@ -13,12 +13,22 @@ type PhotoReturn = {
 	commentCount: number;
 };
 
+type LoginReturn = {
+	type: string;
+	id: number;
+	token: string;
+	refresh_token: string;
+	expires_at: string;
+}
+
 type CommentReturn = {
 	commentID: number;
 	photoID: number;
 	userID: number;
 	comment: string;
 	createdAt: Date;
+	likeCount: number
+	hasLiked: boolean
 };
 
 type UserReturn = {
@@ -26,6 +36,10 @@ type UserReturn = {
 	userName: string;
 	userCreatedAt: string;
 };
+
+type SelfReturn = UserReturn & {
+	friends: UserReturn[];
+}
 
 type FriendUserReturn = UserReturn & {
 	isFriend: boolean;
@@ -38,5 +52,4 @@ type Notification = {
 	type: string
 }
 
-export default debug;
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification };
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn };

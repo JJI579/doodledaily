@@ -13,9 +13,12 @@ type Search = {
 	userCreatedAt: string
 }
 
-onMounted(async () => {
+async function fetchUsers() {
 	const resp = await api.get('/users/fetch')
 	results.value = resp.data;
+}
+onMounted(async () => {
+	await fetchUsers()
 })
 
 
@@ -52,7 +55,7 @@ const filteredResults = computed(() => {
 		</div>
 
 		<div class="results">
-			<SearchResult v-for="result in filteredResults" :data="result" />
+			<SearchResult v-for="result in filteredResults" :data="result" @refresh="fetchUsers" />
 		</div>
 	</div>
 

@@ -2,6 +2,8 @@ from fastapi import FastAPI, WebSocket
 from contextlib import asynccontextmanager
 from database import init_db, close_db, init_db_sync, get_session
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from pathlib import Path
 import json
 
@@ -40,7 +42,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
 	return {"message": "Hello World"}
-
 
 tempString = ""
 from pydantic import BaseModel
@@ -115,6 +116,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 from routes import users, auth, friends, photos, notifications
+
+app.mount('/static', StaticFiles(directory=currentPath / 'photos'), name='static')
 
 app.include_router(notifications.router)
 app.include_router(users.router)

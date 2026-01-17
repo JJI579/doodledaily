@@ -5,7 +5,7 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
 from funcs import get_current_user, get_session
-from .schema import UserFetch, ExtendedUserFetch, RequestFetch
+from .schema import UserFetch, ExtendedUserFetch, RequestFetch, SelfFetch
 from sqlalchemy import case, or_, and_
 from typing import Union
 
@@ -16,18 +16,27 @@ router = APIRouter(
 
 
 @router.get('/fetch/@me')
-async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> UserFetch:
+async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> SelfFetch:
 
-	fetchFriends = await session.execute(select(Friend).where(and_(
+	fetchFriends = await session.execute(select(Friend, User).where(and_(
 		or_(
 			Friend.senderID == current_user.userID,
 			Friend.receiverID == current_user.userID
 		),
 		Friend.status == "accepted"
-	)))
+	)).join(
+		User,
+		or_(
+			Friend.senderID == User.userID,
+			Friend.receiverID == User.userID
+		),
+		isouter=True
+	).group_by(User.userID)
+	)
 
-	# allFriends = fetchFriends.scalars().all()
-	return current_user
+	allFriends = fetchFriends.all()
+	
+	return SelfFetch(friends=[x for _, x in allFriends if x.userID != current_user.userID], userName=str(current_user.userName), userID=current_user.userID, userCreatedAt=current_user.userCreatedAt) # pyright: ignore[reportArgumentType]
 
 @router.get('/{user_id}/fetch')
 async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> Union[UserFetch, ExtendedUserFetch]:
@@ -83,21 +92,38 @@ async def fetchUsers(request: Request, current_user: Annotated[User, Depends(get
 	if query:
 		statement = select(
 			User.userID, User.userName, User.userCreatedAt, Friend.status
-		).join(Friend, and_(
+		).join(Friend, or_(
+			and_(
 			Friend.receiverID == User.userID,
 			Friend.senderID == current_user.userID
+		),
+		and_(
+			Friend.senderID == User.userID,
+			Friend.receiverID == current_user.userID
+		)
 		), isouter=True).where(and_(
 			User.userName.like(f"%{query}%"),
 			User.deactivated==False
 		))
 	else:
 		statement = select(
-			User.userID, User.userName, User.userCreatedAt, Friend.status
-		).join(Friend, and_(
+			User, Friend.status,
+			case(
+				(Friend.receiverID == current_user.userID, 1),
+				else_=0
+			).label("wasSent")
+		).join(Friend, or_(
+			and_(
 			Friend.receiverID == User.userID,
 			Friend.senderID == current_user.userID
+		),
+		and_(
+			Friend.senderID == User.userID,
+			Friend.receiverID == current_user.userID
+		)
 		), isouter=True).where(User.deactivated==False)
 	resp = await session.execute(statement)
-	# print(resp.all())
+	# print(resp.all()[0])
 	# print([x.status for x in resp.all()])
-	return [RequestFetch(status=user.status if user.status else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user in resp.all() if user.userID != current_user.userID]
+	
+	return [RequestFetch(wasSent=wasSent, status=friendStatus if friendStatus else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user, friendStatus, wasSent in resp.all() if user.userID != current_user.userID]

@@ -14,8 +14,14 @@ class UserFetch(BaseModel):
 	class Config:
 		from_attributes = True
 
+
+class SelfFetch(UserFetch):
+	friends: list[UserFetch]
+
+
 class RequestFetch(UserFetch):
 	status: str
+	wasSent: bool
 
 class ExtendedUserFetch(UserFetch):
 	isFriend: bool
@@ -39,6 +45,9 @@ class CommentReturn(BaseModel):
 	userID: int
 	comment: str
 	createdAt: datetime.datetime
+	likeCount: int
+	hasLiked: bool
+
 
 class CommentCreate(BaseModel):
 	comment: str

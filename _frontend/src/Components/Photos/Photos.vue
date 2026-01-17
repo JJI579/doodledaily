@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, Teleport, type Ref, nextTick, computed } from 'vue';
 import Photo from './Photo.vue';
-import type { PhotoReturn } from '../../types';
+import { type UserReturn, type PhotoReturn, type SelfReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
 import PopupComment from './PopupComment.vue';
@@ -31,10 +31,13 @@ async function deletePost() {
 	const resp = await api.post(`/photos/${focusedPhoto.value}/delete`);
 
 	if ('detail' in resp.data) {
-		console.log(resp.data.detail)
 		showOptions.value = false
 		setTimeout(() => {
-			fetchImages();
+			nextTick().then(() => {
+				fetchImages();
+			}
+			);
+
 		}, 1000);
 	}
 
@@ -48,12 +51,12 @@ function showComments(comment: number) {
 }
 
 
-const user = ref({ userName: "" });
-
+const user = ref<SelfReturn | null>(null);
 onMounted(async () => {
 	// Fetch Images
-	await fetchImages();
 	user.value = (await api.get('/users/fetch/@me')).data
+	user.value?.friends.forEach((friend) => usersDict.value.set(friend.userID, friend))
+	await fetchImages();
 
 	const params = new URLSearchParams(window.location.search);
 	const commentParam = params.get('showComment')
@@ -62,11 +65,17 @@ onMounted(async () => {
 		await nextTick();
 		showComments(commentID)
 	}
-
-
 });
 
+const usersDict = ref(new Map());
 
+
+
+
+const username = computed(() => {
+	if (!user.value) return "";
+	return user.value.userName.slice(0, 1).toUpperCase() + user.value.userName.slice(1)
+})
 
 
 </script>
@@ -74,14 +83,14 @@ onMounted(async () => {
 <template>
 	<div class="content">
 		<div class="isTime">
-			<p class="isTime__text">Hey {{ user.userName }}, draw?</p>
+			<p class="isTime__text">Hey {{ username }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
 				Draw<i class="pi pi-pencil"></i>
 			</button>
 		</div>
 		<div class="photos">
 			<Photo :photo="photo" v-for="photo in images" class="photo" @selectmenu="toggleOptions"
-				@comment="showComments" />
+				@comment="showComments" :key="photo.photoID" :user="usersDict.get(photo.photoOwnerID)" />
 		</div>
 		<Teleport to="body">
 			<div class="popup__wrapper">
@@ -124,8 +133,22 @@ onMounted(async () => {
 }
 
 .action__button {
-	background-color: #3a4f7a;
+	display: flex;
+	gap: .5rem;
+	height: 2rem;
+	justify-content: center;
+	align-items: center;
+	font-size: 15px;
+	border: none;
+	border-radius: 8px;
+	background-color: #007bff;
 	color: var(--clr-light-a0);
+	border: 3px solid #0D3F74;
+	cursor: pointer;
+}
+
+.long {
+	width: 80%;
 	margin-bottom: 1rem;
 	height: 2.5rem;
 	border-radius: 10px;

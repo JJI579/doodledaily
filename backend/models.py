@@ -101,6 +101,14 @@ class Friend(Base):
 	createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)	
 	dismissed = Column(Boolean, default=False, nullable=False)
 
+class LikeComment(Base):
+	__tablename__ = "tblLikesComments"
+
+	commentID = Column(Integer, ForeignKey("tblComments.commentID"), primary_key=True, nullable=False)
+	userID = Column(Integer, ForeignKey("tblUsers.userID"), primary_key=True, nullable=False)
+	isLiked = Column(Boolean, default=False, nullable=False)
+	likedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
 Photo.comments = relationship(
 	"Comment",
 	back_populates="photo",

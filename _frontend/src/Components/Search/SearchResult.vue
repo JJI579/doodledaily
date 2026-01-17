@@ -25,6 +25,19 @@ async function cancelRequest() {
 	}
 }
 
+const emit = defineEmits(['refresh'])
+
+async function acceptRequest() {
+	if ("userID" in props.data) {
+		const resp = await api.post(`/friends/${props.data.userID}/accept`)
+		if ('detail' in resp.data) {
+			// Accepted
+			emit('refresh')
+		}
+	}
+}
+
+
 </script>
 
 
@@ -49,10 +62,15 @@ async function cancelRequest() {
 					v-if="props.data.status == 'none' || props.data.status == 'declined' || props.data.status == 'cancelled'">
 					<i class="pi pi-user-plus"></i>
 				</button>
-				<button class="action action--cancel" @click="cancelRequest()"
-					v-else-if="props.data.status == 'pending'">
-					Cancel
+				<button class="action action--text action--accept" @click="acceptRequest()"
+					v-else-if="props.data.wasSent == true && props.data.status == 'pending'">
+					<i class="pi pi-check"></i>
 				</button>
+				<button class="action action--text action--cancel" @click="cancelRequest()"
+					v-else-if="props.data.status == 'pending'">
+					<i class="pi pi-times"></i> Cancel
+				</button>
+
 
 				<div v-else class="action action--friend">
 					<i class="pi pi-users"></i>
@@ -126,8 +144,27 @@ async function cancelRequest() {
 	border: none;
 }
 
-.action--cancel {
+.action--text {
 	width: fit-content;
 	color: white
+}
+
+.action--accept {
+	border-color: var(--clr-success-a0);
+}
+
+.action--accept i {
+	color: var(--clr-success-a10);
+	font-weight: bold;
+}
+
+.action--cancel {
+	display: flex;
+	gap: .25rem;
+	border-color: var(--clr-danger-a0);
+}
+
+.action--cancel i {
+	color: var(--clr-danger-a10);
 }
 </style>

@@ -131,6 +131,8 @@ function removeParam() {
 	transition: 0.5s ease all;
 }
 
+
+
 .popup--active {
 	visibility: visible;
 	bottom: 0;
@@ -233,5 +235,18 @@ function removeParam() {
 		gap: .5rem;
 	}
 
+}
+
+@media (min-width: 1024px) {
+	.popup__wrapper {
+		width: 50%;
+		left: 50%;
+		transform: translateX(-50%);
+
+	}
+
+	.create__comment {
+		width: 100%;
+	}
 }
 </style>
