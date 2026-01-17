@@ -1,16 +1,19 @@
+import type { WebsocketPacket } from "@/types";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
 export const usePopupModel = defineStore('popup', () => {
 	const show = ref(false);
 	const message = ref('');
+	const data = ref<WebsocketPacket | undefined>();
 	const queue = ref<String[]>([]);
 	var running = ref(false);
 
-	function showPopup(str: string) {
+	function showPopup(str: string, clickRoute: WebsocketPacket | undefined = undefined ) {
 		if (!running.value) {
 			running.value = true
 			message.value = str
+			data.value = clickRoute
 			show.value = true
 			setTimeout(() => {
 				running.value = false
@@ -23,5 +26,5 @@ export const usePopupModel = defineStore('popup', () => {
 			queue.value.push(str)
 		}
 	}
-	return { show, message, showPopup }
+	return { show, message, showPopup, data }
 })

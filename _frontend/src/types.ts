@@ -53,4 +53,12 @@ type Notification = {
 	type: string
 }
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn };
+// Websocket
+
+type WebsocketPacket = {
+	t: string
+	d: any
+}
+
+
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn, WebsocketPacket };

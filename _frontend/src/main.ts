@@ -1,24 +1,19 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import { createPinia } from 'pinia';
 
 import './base.css';
 import '@cyhnkckali/vue3-color-picker/dist/style.css'
 import 'primeicons/primeicons.css';
 import './firebase';
-import { createPinia } from 'pinia';
-import { useWebsocket } from './Websocket';
+
 
 const app = createApp(App);
 const pinia = createPinia();
 
-window.addEventListener('beforeunload', () => {
-	const websocket = useWebsocket()
-	websocket.disconnect()
-});
-
-app.use(router);
 app.use(pinia)
+app.use(router);
 app.mount('#app');
 
 // if ('serviceWorker' in navigator) {

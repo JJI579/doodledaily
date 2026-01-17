@@ -2,24 +2,64 @@ from fastapi.websockets import WebSocket
 from models import Token, User, Friend
 from sqlalchemy import and_, select, or_
 from database import get_session
+import json
 
 
+class WebsocketPacket:
+	def createPacket(self, packetType: str, content):
 
+		content = {
+			't': packetType.upper(),
+			'd': content if type(content) == dict else {'text': content} # pyright: ignore[reportCallIssue]
+		}
+		return content
+	
+	def photo_created(self, message: str):
+		return self.createPacket("PHOTO_CREATE", message)	
+
+	def comment_created(self, message: str, photoID: int):
+		x = {
+			'text': message,
+			"onclick": photoID
+		}
+		return self.createPacket("COMMENT_CREATE", x)
+
+	def friend_request(self, message: str):
+		return self.createPacket("FRIEND_REQUEST", message)
+
+	def photo_liked(self, message: str, photoID: int):
+		x = {
+			'text': message,
+			'photoID': photoID 
+		}
+
+		return self.createPacket("PHOTO_LIKE", x)
+	
 class WebsocketManager:
 
-	
 	def __init__(self) -> None:
-		# user_id, {}
 		self.connections = {}
 		
+	async def send_message(self, websocket: WebSocket, message: str):
+		await websocket.send_text(message)
 
-	async def connect(self, websocket: WebSocket):
-		pass
-	
-	async def broadcast(self, message: str):
+	async def send_direct_message(self, message, userID: int):
+		if type(message) == dict:
+			message = json.dumps(message)
+		print(userID)
+		if userID in self.connections:
+			await self.send_message(self.connections[userID]['websocket'], message)
+
+	async def broadcast(self, message, userID: int):
+		if type(message) == dict:
+			message = json.dumps(message)
 		# NEED TO MAKE THIS PERSONALISED PER CONNECTION
-		for connection in self.connections:
-			await connection.send_text(message)
+		if userID in self.connections:
+			for toSendID in self.connections[userID]['friends']:
+				if toSendID in self.connections:
+					await self.send_message(self.connections[toSendID]['websocket'], message)
+		else:
+			return
 
 	async def remove(self, userID: int):
 		if userID in self.connections:
@@ -72,4 +112,6 @@ class WebsocketManager:
 		for connection in self.connections:
 			await connection.close()
 
+global manager, packetClass
+packetClass = WebsocketPacket()
 manager = WebsocketManager()

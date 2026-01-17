@@ -1,25 +1,19 @@
 <script lang="ts" setup>
-import { onMounted, ref, Teleport, type Ref, nextTick, computed } from 'vue';
+import { onMounted, ref, Teleport, type Ref, nextTick, computed, watch } from 'vue';
 import Photo from './Photo.vue';
 import { type UserReturn, type PhotoReturn, type SelfReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
-import PopupComment from './PopupComment.vue';
-import Popup from '../Popup/Popup.vue';
-import { usePopupModel } from '../Popup/popup';
+import CommentOverlay from './CommentOverlay.vue';
+import { useCommentModel } from './comment';
+import { usePhotoStore } from './photos';
+
+
+const photoStore = usePhotoStore();
 
 
 
-var images: Ref<PhotoReturn[]> = ref([]);
 
-async function fetchImages() {
-	try {
-		const res = await api.get('/photos/fetch');
-		images.value = res.data;
-	} catch (err) {
-		console.error(err);
-	}
-}
 
 
 const showOptions = ref(false);
@@ -36,7 +30,7 @@ async function deletePost() {
 		showOptions.value = false
 		setTimeout(() => {
 			nextTick().then(() => {
-				fetchImages();
+				photoStore.fetch()
 			}
 			);
 
@@ -45,20 +39,17 @@ async function deletePost() {
 
 }
 
-const showpopup = ref(false)
-const selectedComments = ref(-1);
-function showComments(comment: number) {
-	selectedComments.value = comment
-	showpopup.value = true
+const commentPage = useCommentModel()
+function showComments(photoID: number) {
+	commentPage.show(photoID)
 }
-
 
 const user = ref<SelfReturn | null>(null);
 onMounted(async () => {
 	// Fetch Images
 	user.value = (await api.get('/users/fetch/@me')).data
 	user.value?.friends.forEach((friend) => usersDict.value.set(friend.userID, friend))
-	await fetchImages();
+	await photoStore.fetch();
 
 	const params = new URLSearchParams(window.location.search);
 	const commentParam = params.get('showComment')
@@ -71,16 +62,10 @@ onMounted(async () => {
 
 const usersDict = ref(new Map());
 
-
-
-
 const username = computed(() => {
 	if (!user.value) return "";
 	return user.value.userName.slice(0, 1).toUpperCase() + user.value.userName.slice(1)
 })
-
-
-const popupStore = usePopupModel();
 
 </script>
 
@@ -91,13 +76,10 @@ const popupStore = usePopupModel();
 			<p class="isTime__text">Hey {{ username }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
 				Draw<i class="pi pi-pencil"></i>
-
-
 			</button>
-			<button @click="() => popupStore.showPopup('hello princess')">show modal</button>
 		</div>
 		<div class="photos">
-			<Photo :photo="photo" v-for="photo in images" class="photo" @selectmenu="toggleOptions"
+			<Photo :photo="photo" v-for="photo in photoStore.photos" class="photo" @selectmenu="toggleOptions"
 				@comment="showComments" :key="photo.photoID" :user="usersDict.get(photo.photoOwnerID)" />
 		</div>
 		<Teleport to="body">
@@ -110,7 +92,7 @@ const popupStore = usePopupModel();
 			</div>
 		</Teleport>
 	</div>
-	<PopupComment v-model="showpopup" :id="selectedComments" />
+	<CommentOverlay />
 
 
 </template>
