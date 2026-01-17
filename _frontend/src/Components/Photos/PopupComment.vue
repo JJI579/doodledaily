@@ -72,6 +72,7 @@ const submit = async () => {
 		message.value = '';
 	} catch (error: any) {
 		console.error('Failed to submit comment', error.response?.data || error.message);
+		// TODO: implement popup where it says 'Comment cant be empty.'
 	}
 };
 

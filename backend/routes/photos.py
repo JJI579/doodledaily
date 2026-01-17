@@ -151,6 +151,8 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	photoObj = result.scalars().first()
 	if not photoObj:
 		raise HTTPException(status_code=404, detail="Photo not found")
+	if len(commentData.comment.strip()) == 0:
+		raise HTTPException(status_code=400, detail="Comment cannot be empty")
 	
 	USER_ID = current_user.userID
 	commentModel = Comment(
@@ -161,7 +163,6 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	
 	tokens = await fetchNotificationTokens(photoObj.photoOwnerID) # type: ignore
 	# TODO: make notification with change to notifications page.
-	print(tokens)
 	session.add(commentModel)
 	await session.commit()
 	await session.refresh(commentModel)
