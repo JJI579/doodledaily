@@ -34,6 +34,10 @@ type UserReturn = {
 	userCreatedAt: string;
 };
 
+type SelfReturn = UserReturn & {
+	friends: UserReturn[];
+}
+
 type FriendUserReturn = UserReturn & {
 	isFriend: boolean;
 };
@@ -45,4 +49,4 @@ type Notification = {
 	type: string
 }
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, LoginReturn };
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn };

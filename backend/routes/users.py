@@ -5,7 +5,7 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
 from funcs import get_current_user, get_session
-from .schema import UserFetch, ExtendedUserFetch, RequestFetch
+from .schema import UserFetch, ExtendedUserFetch, RequestFetch, SelfFetch
 from sqlalchemy import case, or_, and_
 from typing import Union
 
@@ -16,19 +16,27 @@ router = APIRouter(
 
 
 @router.get('/fetch/@me')
-async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> UserFetch:
+async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> SelfFetch:
 
-	fetchFriends = await session.execute(select(Friend).where(and_(
+	fetchFriends = await session.execute(select(Friend, User).where(and_(
 		or_(
 			Friend.senderID == current_user.userID,
 			Friend.receiverID == current_user.userID
 		),
 		Friend.status == "accepted"
-	)))
+	)).join(
+		User,
+		or_(
+			Friend.senderID == User.userID,
+			Friend.receiverID == User.userID
+		),
+		isouter=True
+	).group_by(User.userID)
+	)
 
-	allFriends = fetchFriends.scalars().all()
-	print(allFriends)
-	return current_user
+	allFriends = fetchFriends.all()
+	
+	return SelfFetch(friends=[x for _, x in allFriends if x.userID != current_user.userID], userName=str(current_user.userName), userID=current_user.userID, userCreatedAt=current_user.userCreatedAt) # pyright: ignore[reportArgumentType]
 
 @router.get('/{user_id}/fetch')
 async def fetchUser(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> Union[UserFetch, ExtendedUserFetch]:
