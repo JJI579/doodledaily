@@ -41,6 +41,7 @@ class WebsocketManager:
 		self.connections = {}
 		
 	async def send_message(self, websocket: WebSocket, message: str):
+		print("Sending message!")
 		await websocket.send_text(message)
 
 	async def send_direct_message(self, message, userID: int):

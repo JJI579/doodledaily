@@ -74,9 +74,10 @@ async def websocket_endpoint(websocket: WebSocket):
 			if packetType == "IDENTIFY" and not userIdentified:
 				identifyResponse = await manager.identify(websocket, data['d']['token'])
 				if not identifyResponse:
+					print("Not found, closing websocket.")
 					return await websocket.close()
 				userIdentified = identifyResponse
-				print(userIdentified)
+				print(f"User Identified: {userIdentified}")
 				websocket.user_id = userIdentified # pyright: ignore[reportAttributeAccessIssue]
 			else:
 				# trying to send data without identifying

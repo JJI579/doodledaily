@@ -63,8 +63,8 @@ async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(ge
 	afterTimestamp = request.query_params.get('after')
 	print(afterTimestamp)
 	if afterTimestamp != None:
-		after = datetime.datetime.fromisoformat(afterTimestamp)
-		print(after)
+		print(afterTimestamp)
+		after = datetime.datetime.fromisoformat(afterTimestamp.replace('Z', '+00:00'))
 	else:
 		after = -1
 	friend_exists = exists().where(
