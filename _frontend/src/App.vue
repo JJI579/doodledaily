@@ -4,6 +4,9 @@ import router from './router';
 import api from './api';
 import { enableNotifications } from './firebase';
 import { useWebsocket } from './Websocket';
+import { usePopupModel } from './Components/Popup/popup';
+import Popup from './Components/Popup/Popup.vue';
+
 
 const addBackButton = computed(() => router.currentRoute.value.name !== "Photos");
 
@@ -70,9 +73,16 @@ function wasHold() {
 	}
 }
 
+const popupStore = usePopupModel();
+
+const popupModel = computed(() => popupStore.show);
+
 </script>
 
 <template>
+	<Teleport to="body">
+		<Popup v-model="popupModel" />
+	</Teleport>
 	<div class="menu">
 		<div class="menu__content">
 			<div class="title">
