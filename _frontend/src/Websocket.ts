@@ -17,7 +17,7 @@ function generatePacket(type: string, data: any) {
 	return JSON.stringify(packet)
 }
 
-export const useWebsocket = defineStore("", () => {
+export const useWebsocket = defineStore("websocket", () => {
 	const websocketURL = debug ? 'ws://localhost:8000/ws' : 'wss://pibble.pics/api/ws'
 	const websocket = new WebSocket(websocketURL);
 	const popup = usePopupModel();
@@ -38,7 +38,7 @@ export const useWebsocket = defineStore("", () => {
 			case "PHOTO_CREATE":
 				popup.showPopup(data.d.text)
 				photos.fetch()
-				
+
 				break
 			case "FRIEND_REQUEST":
 				popup.showPopup(data.d.text)

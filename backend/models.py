@@ -37,7 +37,7 @@ class Token(Base):
 class FCMToken(Base):
 	__tablename__ = "tblFCMs"
 
-	tokenID = Column(String(512), ForeignKey("tblTokens.tokenID"), primary_key=True, nullable=False)
+	tokenID = Column(String(512), primary_key=True, nullable=False)
 	userID = Column(Integer, ForeignKey("tblUsers.userID"), nullable=False)
 	createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
 	platform = Column(String, nullable=False)

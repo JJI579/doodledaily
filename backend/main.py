@@ -65,9 +65,9 @@ async def tempDebug(tempData: tempForm):
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
 	await websocket.accept()
+	userIdentified = False
 	while True:
 		# await websocket.send_text(f"Message text was: {data}")	
-		userIdentified = False
 		try:
 			data = await websocket.receive_json()
 			packetType = data.get('t', '')
@@ -78,23 +78,12 @@ async def websocket_endpoint(websocket: WebSocket):
 				userIdentified = identifyResponse
 				print(userIdentified)
 				websocket.user_id = userIdentified # pyright: ignore[reportAttributeAccessIssue]
-			elif userIdentified != False:
-				
-
-				print(packetType)
-				match packetType:
-
-					case "COMMENT_CREATE":
-						pass
-					
-					case "FRIEND_ACCEPT":
-						pass
-					
 			else:
 				# trying to send data without identifying
 				print("doing")
 				await websocket.close()
-		except:
+		except Exception as e:
+			print("ws error:", e)
 			print("closing")
 			try:
 				potentialID	 = getattr(websocket, "user_id")
