@@ -16,9 +16,11 @@ const emit = defineEmits(['update:modelValue'])
 let start: number | undefined = undefined;
 
 const timer = ref<HTMLElement | undefined>();
+
+
 watch(() => props.modelValue, (newval) => {
 	if (newval) {
-		// requestAnimationFrame(updateAnimation)
+		requestAnimationFrame(updateAnimation);
 	}
 })
 
@@ -44,7 +46,6 @@ function updateAnimation(timestamp: number) {
 		timer.value.style.width = `${length}%`;
 	}
 	if (elapsed > animationLength) {
-
 		popupStore.show = false
 		return;
 	}

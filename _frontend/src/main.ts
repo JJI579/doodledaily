@@ -6,11 +6,13 @@ import './base.css';
 import '@cyhnkckali/vue3-color-picker/dist/style.css'
 import 'primeicons/primeicons.css';
 import './firebase';
+import { createPinia } from 'pinia';
 
 const app = createApp(App);
-
+const pinia = createPinia();
 app.use(router);
 
+app.use(pinia)
 app.mount('#app');
 
 // if ('serviceWorker' in navigator) {
