@@ -14,6 +14,11 @@ class UserFetch(BaseModel):
 	class Config:
 		from_attributes = True
 
+
+class SelfFetch(UserFetch):
+	friends: list[UserFetch]
+
+
 class RequestFetch(UserFetch):
 	status: str
 	wasSent: bool

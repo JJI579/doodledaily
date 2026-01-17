@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, Teleport, type Ref, nextTick, computed } from 'vue';
 import Photo from './Photo.vue';
-import { type UserReturn, type PhotoReturn } from '../../types';
+import { type UserReturn, type PhotoReturn, type SelfReturn } from '../../types';
 import router from '../../router';
 import api from '../../api';
 import PopupComment from './PopupComment.vue';
@@ -47,11 +47,13 @@ function showComments(comment: number) {
 }
 
 
-const user = ref<UserReturn | null>(null);
+const user = ref<SelfReturn | null>(null);
 onMounted(async () => {
 	// Fetch Images
-	await fetchImages();
 	user.value = (await api.get('/users/fetch/@me')).data
+	user.value?.friends.forEach((friend) => usersDict.value.set(friend.userID, friend))
+	console.log(usersDict.value)
+	await fetchImages();
 
 	const params = new URLSearchParams(window.location.search);
 	const commentParam = params.get('showComment')
@@ -61,6 +63,10 @@ onMounted(async () => {
 		showComments(commentID)
 	}
 });
+
+const usersDict = ref(new Map());
+
+
 
 
 const username = computed(() => {
@@ -81,7 +87,7 @@ const username = computed(() => {
 		</div>
 		<div class="photos">
 			<Photo :photo="photo" v-for="photo in images" class="photo" @selectmenu="toggleOptions"
-				@comment="showComments" />
+				@comment="showComments" :user="usersDict.get(photo.photoOwnerID)" />
 		</div>
 		<Teleport to="body">
 			<div class="popup__wrapper">

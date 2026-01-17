@@ -37,7 +37,6 @@ app.add_middleware(
 async def root():
 	return {"message": "Hello World"}
 
-
 tempString = ""
 from pydantic import BaseModel
 class tempForm(BaseModel):
