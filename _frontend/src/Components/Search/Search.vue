@@ -66,6 +66,7 @@ const filteredResults = computed(() => {
 <style lang="css" scoped>
 .content {
 	width: 90%;
+	
 	margin: auto;
 	margin-top: 1rem;
 }

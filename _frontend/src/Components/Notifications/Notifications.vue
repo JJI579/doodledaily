@@ -34,6 +34,6 @@ async function loadNotifications() {
 	margin: auto;
 	margin-top: 1rem;
 	height: 85vh;
-	overflow-y: scroll;
+	overflow-y: hidden;
 }
 </style>

@@ -159,7 +159,7 @@ function removeParam() {
 	display: flex;
 	flex-direction: column;
 	max-height: 45vh;
-	overflow-y: scroll;
+	overflow-y: hidden;
 	gap: 0.5rem;
 	margin-top: 1rem;
 	scroll-behavior: smooth;

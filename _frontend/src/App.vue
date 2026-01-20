@@ -14,6 +14,7 @@ function notificationsPage() {
 	router.push({ name: "Notifications" });
 }
 
+const authenticated = ref(false);
 
 onMounted(async () => {
 	const websocket = useWebsocket();
@@ -33,11 +34,15 @@ onMounted(async () => {
 		}
 	}
 
-
-	if (localStorage.getItem('userID') == null) {
+	try {
 		const resp = await api.get('/users/fetch/@me')
+		authenticated.value = true
 		localStorage.setItem('userID', resp.data.userID)
+
+	} catch (error) {
+		console.log(error)
 	}
+
 
 
 	try {
@@ -77,12 +82,23 @@ const popupStore = usePopupModel();
 
 const popupModel = computed(() => popupStore.show);
 
+const activeScreen = computed(() => router.currentRoute.value.name);
+
+function toPhotos() {
+	if (router.currentRoute.value.name !== 'Photos') {
+		router.push({ name: "Photos" })
+	}
+}
+function toSelfUser() {
+	router.push('/user?id=' + localStorage.getItem('userID'))
+}
 </script>
 
 <template>
 	<Teleport to="body">
 		<Popup v-model="popupModel" />
 	</Teleport>
+
 	<div class="menu">
 		<div class="menu__content">
 			<div class="title">
@@ -99,7 +115,26 @@ const popupModel = computed(() => popupStore.show);
 			</div>
 		</div>
 	</div>
-	<RouterView />
+	<div class="content">
+		<RouterView />
+	</div>
+	<div class="bottom" v-if="authenticated">
+
+		<div class="button" :class="{ 'button--active': activeScreen == 'Photos' }" @click="toPhotos()">
+			<div class="button__icon">
+				<i class="pi pi-home"></i>
+			</div>
+			<p class="button__title">Home</p>
+		</div>
+		<div class="button" @click="toSelfUser()">
+			<div class="button__icon">
+				<i class="pi pi-user"></i>
+			</div>
+			<p class="button__title">Profile</p>
+		</div>
+	</div>
+
+
 </template>
 
 <style lang="css" scoped>
@@ -133,5 +168,51 @@ const popupModel = computed(() => popupStore.show);
 .end {
 	display: flex;
 	gap: 2rem;
+}
+
+.content {
+	flex: 1;
+	overflow: hidden;
+	margin-bottom: 2.5rem;
+}
+
+.bottom {
+	width: 100%;
+	height: 4rem;
+	background-color: var(--clr-surface-a0);
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+
+}
+
+.button {
+	color: grey;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+	transition: 0.5s ease all;
+	cursor: pointer;
+	flex: 1;
+}
+
+
+.button--active {
+	color: white
+}
+
+.button__icon {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.button__title {
+	font-size: small;
+	margin: 0;
+	margin-top: 5px;
 }
 </style>
