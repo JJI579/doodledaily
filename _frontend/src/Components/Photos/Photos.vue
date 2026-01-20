@@ -7,6 +7,7 @@ import api from '../../api';
 import CommentOverlay from './CommentOverlay.vue';
 import { useCommentModel } from './comment';
 import { usePhotoStore } from './photos';
+import { useUserModel } from './user';
 
 
 const photoStore = usePhotoStore();
@@ -44,11 +45,14 @@ function showComments(photoID: number) {
 	commentPage.show(photoID)
 }
 
+const userStore = useUserModel();
+
 const user = ref<SelfReturn | null>(null);
 onMounted(async () => {
-	// Fetch Images
-	user.value = (await api.get('/users/fetch/@me')).data
-	user.value?.friends.forEach((friend) => usersDict.value.set(friend.userID, friend))
+
+
+
+	await userStore.fetch();
 	await photoStore.fetch();
 
 	const params = new URLSearchParams(window.location.search);
@@ -60,27 +64,20 @@ onMounted(async () => {
 	}
 });
 
-const usersDict = ref(new Map());
-
-const username = computed(() => {
-	if (!user.value) return "";
-	return user.value.userName.slice(0, 1).toUpperCase() + user.value.userName.slice(1)
-})
-
 </script>
 
 <template>
 	<div class="content">
 
 		<div class="isTime">
-			<p class="isTime__text">Hey {{ username }}, draw?</p>
+			<p class="isTime__text">Hey {{ userStore.username }}, draw?</p>
 			<button class="action__button long" @click="() => router.push({ name: 'draw' })">
 				Draw<i class="pi pi-pencil"></i>
 			</button>
 		</div>
 		<div class="photos">
 			<Photo :photo="photo" v-for="photo in photoStore.photos" class="photo" @selectmenu="toggleOptions"
-				@comment="showComments" :key="photo.photoID" :user="usersDict.get(photo.photoOwnerID)" />
+				@comment="showComments" :key="photo.photoID" :user="userStore.friendsDict.get(photo.photoOwnerID)" />
 		</div>
 		<Teleport to="body">
 			<div class="popup__wrapper">

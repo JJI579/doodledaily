@@ -1,5 +1,5 @@
 import api from "@/api";
-import { type PhotoReturn } from "@/types";
+import { type UserReturn, type PhotoReturn } from "@/types";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
@@ -41,8 +41,7 @@ export const usePhotoStore = defineStore('photos', () => {
 		}
 	}
 
-	// init photos...
-	fetch()
 
-	return { photos, fetch }
+	return { photos, hardFetch, fetch }
+
 })
