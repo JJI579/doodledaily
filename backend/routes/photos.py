@@ -126,6 +126,10 @@ async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(ge
 	apiLog.info(f"/photos/fetch | -- Photos Fetch End -- | Username: {current_user.userName}")
 	return x
 
+@router.get('/fetch/@me')
+async def fetchUsersPhotos(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> list[PhotoReturn]:
+	resp = await session.execute(select(Photo).where(Photo.photoOwnerID == current_user.userID, Photo.isDeleted == False))
+	return list(resp.scalars().all())
 
 @router.post('/{photo_id}/delete')
 async def deletePhoto(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):

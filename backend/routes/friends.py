@@ -36,7 +36,7 @@ async def requestFriend(request: Request, user: Annotated[User, Depends(get_curr
 			result.status = "pending" # type: ignore
 			await session.commit()
 			tokens = await fetchNotificationTokens(receiverID)
-			await dispatchNotification(tokens, f"{user.userName} has requested you as a friend!")
+			await dispatchNotification(tokens, f"{user.userName} has requested you as a friend!") # type: ignore
 			return Response(status_code=204)
 		raise HTTPException(status_code=400, detail="Friend request already sent")
 	else:
