@@ -1,3 +1,7 @@
+
+const debug = false
+export default debug;
+
 type PhotoReturn = {
 	photoID: number;
 	photoName: string;
@@ -34,6 +38,10 @@ type UserReturn = {
 	userCreatedAt: string;
 };
 
+type SelfReturn = UserReturn & {
+	friends: UserReturn[];
+}
+
 type FriendUserReturn = UserReturn & {
 	isFriend: boolean;
 };
@@ -45,4 +53,12 @@ type Notification = {
 	type: string
 }
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, LoginReturn };
+// Websocket
+
+type WebsocketPacket = {
+	t: string
+	d: any
+}
+
+
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn, WebsocketPacket };

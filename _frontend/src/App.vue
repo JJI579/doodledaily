@@ -3,6 +3,9 @@ import { computed, onMounted, ref } from 'vue';
 import router from './router';
 import api from './api';
 import { enableNotifications } from './firebase';
+import { useWebsocket } from './Websocket';
+import { usePopupModel } from './Components/Popup/popup';
+import Popup from './Components/Popup/Popup.vue';
 
 
 const addBackButton = computed(() => router.currentRoute.value.name !== "Photos");
@@ -13,6 +16,7 @@ function notificationsPage() {
 
 
 onMounted(async () => {
+	const websocket = useWebsocket();
 
 
 	// forces update incase app has been updated.
@@ -64,12 +68,21 @@ function wasHold() {
 	const seconds = (compare - holdStart.value) / 1000
 	if (seconds > .5) {
 		router.push({ name: 'Debug' })
+	} else {
+		window.location.reload();
 	}
 }
+
+const popupStore = usePopupModel();
+
+const popupModel = computed(() => popupStore.show);
 
 </script>
 
 <template>
+	<Teleport to="body">
+		<Popup v-model="popupModel" />
+	</Teleport>
 	<div class="menu">
 		<div class="menu__content">
 			<div class="title">

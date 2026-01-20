@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import { usePopupModel } from './popup';
-
+import { useCommentModel } from '../Photos/comment';
 
 const props = defineProps({
 	modelValue: {
@@ -16,9 +16,11 @@ const emit = defineEmits(['update:modelValue'])
 let start: number | undefined = undefined;
 
 const timer = ref<HTMLElement | undefined>();
+
+
 watch(() => props.modelValue, (newval) => {
 	if (newval) {
-		// requestAnimationFrame(updateAnimation)
+		requestAnimationFrame(updateAnimation);
 	}
 })
 
@@ -44,12 +46,20 @@ function updateAnimation(timestamp: number) {
 		timer.value.style.width = `${length}%`;
 	}
 	if (elapsed > animationLength) {
-
 		popupStore.show = false
 		return;
 	}
 
 	requestAnimationFrame(updateAnimation);
+}
+
+function routeClick() {
+	if (popupStore.data === undefined) { return }
+	if (popupStore.data.t == "COMMENT_CREATE") {
+		const comment = useCommentModel()
+		comment.show(popupStore.data.d.onclick)
+		popupStore.show = false
+	}
 }
 </script>
 
@@ -58,7 +68,8 @@ function updateAnimation(timestamp: number) {
 <template>
 
 	<div class="popup__wrapper"
-		:class="{ 'popup--active': props.modelValue, 'popup__wrapper--success': props.modelValue }">
+		:class="{ 'popup--active': props.modelValue, 'popup__wrapper--success': props.modelValue }"
+		@click="routeClick()">
 
 		<div class="popup">
 			<div class="icon icon--success">

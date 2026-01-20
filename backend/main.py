@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from contextlib import asynccontextmanager
-from database import init_db, close_db, init_db_sync
+from database import init_db, close_db, init_db_sync, get_session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -17,6 +17,11 @@ from routes.auth import fetchNotificationTokens
 from fcm_messaging import dispatchNotification
 import datetime
 import secrets
+import json
+from WebsocketManager import manager
+from sqlalchemy import select, and_, or_
+from models import User, Token, Friend
+
 currentPath = Path.cwd()
 
 def provideRandomTime(focusedDay: datetime.datetime):
@@ -105,6 +110,8 @@ origins = [
 	"https://pibble.pics/api",
 	"https://pibble.pics",
 ]
+
+
 # this is great
 app.add_middleware(
 	CORSMiddleware,
@@ -117,7 +124,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
 	return {"message": "Hello World"}
-
 
 tempString = ""
 from pydantic import BaseModel
@@ -136,6 +142,42 @@ async def tempDebug(tempData: tempForm):
 	return {
 		"detail": "ok"
 	}
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+	await websocket.accept()
+	userIdentified = False
+	while True:
+		# await websocket.send_text(f"Message text was: {data}")	
+		try:
+			data = await websocket.receive_json()
+			packetType = data.get('t', '')
+			if packetType == "IDENTIFY" and not userIdentified:
+				identifyResponse = await manager.identify(websocket, data['d']['token'])
+				if not identifyResponse:
+					print("Not found, closing websocket.")
+					return await websocket.close()
+				userIdentified = identifyResponse
+				print(f"User Identified: {userIdentified}")
+				websocket.user_id = userIdentified # pyright: ignore[reportAttributeAccessIssue]
+			else:
+				# trying to send data without identifying
+				print("doing")
+				await websocket.close()
+		except Exception as e:
+			print("ws error:", e)
+			print("closing")
+			try:
+				potentialID	 = getattr(websocket, "user_id")
+				if potentialID:
+					await manager.remove(potentialID)
+			except AttributeError:
+				break
+			break
+			
+
+
 
 from routes import users, auth, friends, photos, notifications
 

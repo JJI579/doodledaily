@@ -9,6 +9,8 @@ from funcs import get_current_user, get_session
 from .auth import fetchNotificationTokens
 from fcm_messaging import dispatchNotification
 
+from WebsocketManager import manager
+
 router = APIRouter(
 	prefix="/friends",
 	tags=["friends"],

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, type PropType, type Ref } from 'vue';
-import type { PhotoReturn } from '../../types';
+import type { PhotoReturn, UserReturn } from '../../types';
 import { RouterLink } from 'vue-router';
 import router from '../../router';
 import api from '../../api';
@@ -15,6 +15,10 @@ const props = defineProps({
 		required: false,
 		default: false,
 	},
+	user: {
+		type: Object as PropType<UserReturn>,
+		required: false
+	}
 });
 
 
@@ -75,12 +79,9 @@ const relativeTime = computed(() => {
 	return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 });
 
-type User = {
-	userID: number;
-	userName: string;
-};
 
-const owner: Ref<User | undefined> = ref();
+
+const owner: Ref<UserReturn | undefined> = ref(props.user);
 
 onMounted(async () => {
 	const token = localStorage.getItem('token');
@@ -88,6 +89,10 @@ onMounted(async () => {
 		return router.push({ name: 'home' });
 	}
 
+	if (owner.value !== undefined) {
+		console.log("Already fetched User")
+		return
+	}
 	try {
 		const { data } = await api.get(`/users/${props.photo.photoOwnerID}/fetch`);
 		owner.value = data;
@@ -99,6 +104,7 @@ onMounted(async () => {
 function goToUser() {
 	router.push({ name: 'user', query: { id: props.photo.photoOwnerID } });
 }
+
 function downloadBase64Image() {
 	const link = document.createElement('a');
 	link.href = props.photo.photoData;
@@ -106,6 +112,7 @@ function downloadBase64Image() {
 	link.click();
 }
 
+// see if you can delete the photo.
 const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID'));
 </script>
 
