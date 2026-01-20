@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlmodel import select, and_, or_, exists
-from typing import Annotated
+from typing import Annotated, Union, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Photo, Comment, Favourite, Friend, LikeComment
 from funcs import get_current_user, get_session
 from sqlalchemy import case, func
 from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn
 import secrets
+
 from base64 import b64decode
 from .auth import fetchNotificationTokens
 from fcm_messaging import dispatchNotification
@@ -22,6 +23,20 @@ router = APIRouter(
 	prefix="/photos",
 	tags=["photos"],
 )
+
+def friend_exists(userID: int, friendID: int):
+	return exists().where(
+		or_(
+			and_(
+				Friend.senderID == userID,
+				Friend.receiverID == friendID,
+			),
+			and_(
+				Friend.receiverID == userID,
+				Friend.senderID == friendID,
+			),
+		),
+	)
 
 from pathlib import Path
 
@@ -65,26 +80,44 @@ async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Anno
 	apiLog.info(f"/photos/create | Broadcasting to active users | Username: {current_user.userName}")
 
 @router.get('/fetch')
-async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> list[LikesPhotoReturn]:
+async def fetch_photos(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> Sequence[Union[LikesPhotoReturn, PhotoReturn]]:
 	apiLog.info(f"/photos/fetch | -- Fetch Photos start -- | Username: {current_user.userName}")
+
+	specificUser = request.query_params.get('user')
+	if specificUser != None:
+		print("------------" + str(specificUser))
+		apiLog.info(f"/photos/fetch | Specific user parameter found: {specificUser}  | Username: {current_user.userName} | {current_user.userID}")
+		result = await session.execute(select(Friend).where(
+			and_(
+				or_(
+					Friend.senderID == specificUser,
+					Friend.receiverID == specificUser
+				),
+				or_(
+					Friend.senderID == current_user.userID,
+					Friend.receiverID == current_user.userID
+				),
+				Friend.status == "accepted"
+			)
+		 )) # type: ignore
+		results = result.scalars().all()
+		if results:
+			statement = select(Photo).where(Photo.photoOwnerID == specificUser, Photo.isDeleted == False).limit(20).order_by(Photo.photoCreatedAt.desc())
+			result = await session.execute(statement)
+			photos = result.scalars().all()
+		else:
+			# TODO: change status code to be correct?
+			raise HTTPException(status_code=401, detail="Not friends")
+		return photos
+
+
 	afterTimestamp = request.query_params.get('after')
 	if afterTimestamp != None:
 		apiLog.info(f"/photos/fetch | After parameter found: {afterTimestamp}  | Username: {current_user.userName}")
 		after = datetime.datetime.fromisoformat(afterTimestamp.replace('Z', '+00:00'))
 	else:
 		after = -1
-	friend_exists = exists().where(
-		or_(
-			and_(
-				Friend.senderID == current_user.userID,
-				Friend.receiverID == Photo.photoOwnerID,
-			),
-			and_(
-				Friend.receiverID == current_user.userID,
-				Friend.senderID == Photo.photoOwnerID,
-			),
-		),
-	)
+	
 	statement = (
         select(
             Photo,
@@ -108,7 +141,7 @@ async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(ge
 		.where(
 			Photo.isDeleted == False, 
 			or_(
-				friend_exists,
+				friend_exists(current_user.userID, Photo.photoOwnerID), # type: ignore
 				Photo.photoOwnerID == current_user.userID
 			)
 		).limit(20).order_by(Photo.photoCreatedAt.desc())
@@ -125,11 +158,6 @@ async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(ge
 	apiLog.info(f"/photos/fetch | Returning {len(x)} Photos | Username: {current_user.userName}")
 	apiLog.info(f"/photos/fetch | -- Photos Fetch End -- | Username: {current_user.userName}")
 	return x
-
-@router.get('/fetch/@me')
-async def fetchUsersPhotos(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> list[PhotoReturn]:
-	resp = await session.execute(select(Photo).where(Photo.photoOwnerID == current_user.userID, Photo.isDeleted == False))
-	return list(resp.scalars().all())
 
 @router.post('/{photo_id}/delete')
 async def deletePhoto(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
@@ -223,7 +251,7 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	return commentModel
 
 @router.get('/{photo_id}/comments')
-async def fetchPhotoComments(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[CommentReturn]:
+async def fetchPhotoComments(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> Sequence[CommentReturn]:
 	photoID = int(request.path_params.get('photo_id', -1))
 	if photoID == -1:
 		apiLog.warning(f"/photo_id/comments | Photo not found | Username: {current_user.userName}")

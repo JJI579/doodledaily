@@ -2,14 +2,17 @@
 import { onMounted, ref } from 'vue';
 import router from '../../router';
 import api from '../../api';
-import { type FriendUserReturn } from '../../types';
+import { type PhotoReturn, type FriendUserReturn } from '../../types';
 import type { AxiosError } from 'axios';
+import Image from './Image.vue';
 
 
 
 const user = ref<FriendUserReturn>();
 const userID = ref(-1);
 
+
+const photoArray = ref<PhotoReturn[]>([]);
 
 onMounted(async () => {
 	const params = new URLSearchParams(window.location.search);
@@ -22,6 +25,9 @@ onMounted(async () => {
 		console.log(resp)
 		user.value = resp.data
 
+
+		const resp2 = await api.get(`/photos/fetch?user=${userParam}`)
+		photoArray.value = resp2.data
 	}
 
 })
@@ -60,8 +66,8 @@ async function requestFriend() {
 
 		</div>
 		<div class="posts">
-			<!-- grid based 3x3 -->
 
+			<Image v-for="photo in photoArray" :key="photo.photoID" :image="photo" />
 		</div>
 	</div>
 </template>
@@ -115,5 +121,15 @@ async function requestFriend() {
 	outline: none;
 	border: none;
 
+}
+
+.posts {
+	justify-content: left;
+	margin: auto;
+	width: 95%;
+	margin-top: 1rem;
+	display: flex;
+	flex-basis: 33.33%;
+	flex-wrap: wrap;
 }
 </style>
