@@ -6,9 +6,12 @@ import { enableNotifications } from './firebase';
 import { useWebsocket } from './Websocket';
 import { usePopupModel } from './Components/Popup/popup';
 import Popup from './Components/Popup/Popup.vue';
+import { useUserModel } from './Components/Photos/user';
 
 
-const addBackButton = computed(() => router.currentRoute.value.name !== "Photos");
+const userStore = useUserModel();
+
+const addBackButton = computed(() => router.currentRoute.value.name !== "Photos" && !router.currentRoute.value.fullPath.includes(`user?id=${userStore.user?.userID}`));
 
 function notificationsPage() {
 	router.push({ name: "Notifications" });
@@ -18,7 +21,6 @@ const authenticated = ref(false);
 
 onMounted(async () => {
 	const websocket = useWebsocket();
-
 
 	// forces update incase app has been updated.
 	var lastRefreshed = localStorage.getItem('last_refreshed');
@@ -63,10 +65,6 @@ onMounted(async () => {
 	}
 })
 
-function refresh() {
-	window.location.reload();
-}
-
 const holdStart = ref(0);
 function wasHold() {
 	const compare = new Date().getTime()
@@ -79,9 +77,6 @@ function wasHold() {
 }
 
 const popupStore = usePopupModel();
-
-const popupModel = computed(() => popupStore.show);
-
 const activeScreen = computed(() => router.currentRoute.value.name);
 
 function toPhotos() {
@@ -96,7 +91,7 @@ function toSelfUser() {
 
 <template>
 	<Teleport to="body">
-		<Popup v-model="popupModel" />
+		<Popup v-model="popupStore.show" />
 	</Teleport>
 
 	<div class="menu">
@@ -173,14 +168,14 @@ function toSelfUser() {
 .content {
 	flex: 1;
 	overflow: hidden;
-	margin-bottom: 2.5rem;
+	margin-bottom: 5.5rem;
 }
 
 .bottom {
 	width: 100%;
 	height: 4rem;
 	background-color: var(--clr-surface-a0);
-	position: sticky;
+	position: absolute;
 	bottom: 0;
 	display: flex;
 	justify-content: space-evenly;

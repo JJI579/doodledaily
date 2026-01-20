@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import router from '../../router';
 import api from '../../api';
 import { type PhotoReturn, type FriendUserReturn } from '../../types';
 import type { AxiosError } from 'axios';
 import Image from './Image.vue';
+import { useUserModel } from '../Photos/user';
+import { useRoute } from 'vue-router';
 
 
 
@@ -14,9 +16,11 @@ const userID = ref(-1);
 
 const photoArray = ref<PhotoReturn[]>([]);
 
-onMounted(async () => {
-	const params = new URLSearchParams(window.location.search);
-	const userParam = params.get('id');
+const route = useRoute();
+
+async function initPage() {
+	const userParam = route.query.id || null;
+
 	if (userParam == null) {
 		router.push({ name: 'home' });
 	} else {
@@ -29,7 +33,14 @@ onMounted(async () => {
 		const resp2 = await api.get(`/photos/fetch?user=${userParam}`)
 		photoArray.value = resp2.data
 	}
+}
 
+watch(() => route.query.id, async () => {
+	await initPage()
+})
+
+onMounted(async () => {
+	await initPage()
 })
 
 const photoData = "true"
@@ -47,6 +58,9 @@ async function requestFriend() {
 		}
 	}
 }
+
+const userStore = useUserModel();
+
 </script>
 
 
@@ -62,7 +76,10 @@ async function requestFriend() {
 			<div class="user__name">
 				<h2 class="name">{{ user?.userName }}</h2>
 			</div>
-			<button class="button" @click="requestFriend()">Add Friend</button>
+			<button class="button" @click="requestFriend()"
+				v-if="!userStore.friendsDict.get(user?.userID) && !(user?.userID == userStore.user?.userID)">Add
+				Friend
+			</button>
 
 		</div>
 		<div class="posts">

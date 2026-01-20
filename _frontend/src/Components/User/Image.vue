@@ -2,8 +2,6 @@
 import type { PhotoReturn } from '@/types';
 import type { PropType } from 'vue';
 
-
-
 const props = defineProps({
 	image: {
 		type: Object as PropType<PhotoReturn>,
@@ -12,18 +10,15 @@ const props = defineProps({
 })
 </script>
 
-
-
 <template>
 
 	<div class="container">
 		<div class="photo">
-			<img :src="props.image.photoData" alt="?" class="img">
+			<img :src="props.image.photoData" alt="Image not found" class="img">
 		</div>
 	</div>
 
 </template>
-
 
 <style lang="css" scoped>
 .container {

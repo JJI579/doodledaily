@@ -47,9 +47,9 @@ api.interceptors.response.use(
 				originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
 				return api(originalRequest);
 			} catch (err) {
-				// TODO: redirect to login
 				localStorage.removeItem('token');
 				localStorage.removeItem('refresh_token');
+				router.push({ name: 'home' });
 				console.error('Refresh token failed', err);
 				return Promise.reject(err);
 			}
