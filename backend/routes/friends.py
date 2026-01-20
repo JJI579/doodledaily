@@ -1,15 +1,11 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from sqlmodel import select, update, and_
-from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
+from models import User, Friend
 from funcs import get_current_user, get_session
-
 from .auth import fetchNotificationTokens
 from fcm_messaging import dispatchNotification
-
-from WebsocketManager import manager
 
 router = APIRouter(
 	prefix="/friends",

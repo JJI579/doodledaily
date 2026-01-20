@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlmodel import select
-from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
+from models import User, Friend
 from funcs import get_current_user, get_session
 from .schema import UserFetch, ExtendedUserFetch, RequestFetch, SelfFetch
 from sqlalchemy import case, or_, and_

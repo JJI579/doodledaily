@@ -13,6 +13,11 @@ from fcm_messaging import dispatchNotification
 import datetime
 
 from WebsocketManager import manager, packetClass
+
+from logger import APILogger
+
+apiLog = APILogger()
+
 router = APIRouter(
 	prefix="/photos",
 	tags=["photos"],
@@ -26,10 +31,10 @@ photosDir.mkdir(exist_ok=True)
 @router.post('/create')
 async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)):
 	photoName = f"{secrets.token_urlsafe(64)}.png"
-	
+	apiLog.info(f"/photos/create | Creating Photo | Username: {current_user.userName}")
 	with open(photosDir / photoName, "wb") as f:
 		f.write(b64decode(photoData.photoData.split('base64,')[1]))
-	
+	apiLog.info(f"/photos/create | Wrote photo | Username: {current_user.userName} | {photoName}")
 	photoURL = f'{request.base_url}{"api/" if "127" not in str(request.base_url) else ""}static/{photoName}'
 	photoObject = Photo(
 		photoName=photoData.photoName,
@@ -38,7 +43,6 @@ async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Anno
 		photoOwnerID=current_user.userID
 	)
 	session.add(photoObject)
-
 	resp = await session.execute(select(Friend).where(
 		and_(
 			or_(
@@ -49,38 +53,37 @@ async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Anno
 		)
 	))
 	results = resp.scalars().all()
+	await session.commit()
+	apiLog.info(f"/photos/create | Committed photo to database | Username: {current_user.userName}")
 	if results:
 		friend_ids = [x.senderID if x.senderID != current_user.userID else x.receiverID for x in results] # type: ignore
+		apiLog.info(f"/photos/create | Found friends, sending notification | Username: {current_user.userName}")
 		tokens = await fetchNotificationTokens(*friend_ids) # type: ignore
+		apiLog.info(f"/photos/create | Sending notification to {len(friend_ids)} Friends | Username: {current_user.userName}")
 		await dispatchNotification(tokens, f"{current_user.userName} has posted a Pibble!")
-
 	await manager.broadcast(packetClass.photo_created(f"{current_user.userName} has posted a Pibble!"), current_user.userID) # pyright: ignore[reportArgumentType]
-	await session.commit()
+	apiLog.info(f"/photos/create | Broadcasting to active users | Username: {current_user.userName}")
 
 @router.get('/fetch')
 async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> list[LikesPhotoReturn]:
-
+	apiLog.info(f"/photos/fetch | -- Fetch Photos start -- | Username: {current_user.userName}")
 	afterTimestamp = request.query_params.get('after')
-	print(afterTimestamp)
 	if afterTimestamp != None:
-		print(afterTimestamp)
+		apiLog.info(f"/photos/fetch | After parameter found: {afterTimestamp}  | Username: {current_user.userName}")
 		after = datetime.datetime.fromisoformat(afterTimestamp.replace('Z', '+00:00'))
 	else:
 		after = -1
 	friend_exists = exists().where(
-		and_(
-			# Friend.status == "accepted",
-			or_(
-				and_(
-					Friend.senderID == current_user.userID,
-					Friend.receiverID == Photo.photoOwnerID,
-				),
-				and_(
-					Friend.receiverID == current_user.userID,
-					Friend.senderID == Photo.photoOwnerID,
-				),
+		or_(
+			and_(
+				Friend.senderID == current_user.userID,
+				Friend.receiverID == Photo.photoOwnerID,
 			),
-		)
+			and_(
+				Friend.receiverID == current_user.userID,
+				Friend.senderID == Photo.photoOwnerID,
+			),
+		),
 	)
 	statement = (
         select(
@@ -110,13 +113,17 @@ async def fetchPhotos(request: Request, current_user: Annotated[User, Depends(ge
 			)
 		).limit(20).order_by(Photo.photoCreatedAt.desc())
     )
+	
 
 	if after != -1:
+		apiLog.info(f"/photos/fetch | Applied after timestamp onto statement   | Username: {current_user.userName}")
 		statement = statement.where(Photo.photoCreatedAt >= after)
 	result = await session.execute(statement)
 	x =  [
 		LikesPhotoReturn(commentCount=commentcount, photoData=photo.photoData, photoCreatedAt=photo.photoCreatedAt, photoID=photo.photoID, photoName=photo.photoName, photoOwnerID=photo.photoOwnerID, photoType=photo.photoType, isFavourited=is_fav, likesCount=likescount) for photo, is_fav, likescount, commentcount in result.all() 
 	]
+	apiLog.info(f"/photos/fetch | Returning {len(x)} Photos | Username: {current_user.userName}")
+	apiLog.info(f"/photos/fetch | -- Photos Fetch End -- | Username: {current_user.userName}")
 	return x
 
 
@@ -125,12 +132,15 @@ async def deletePhoto(request: Request, current_user: Annotated[User, Depends(ge
 	photoID = int(request.path_params.get('photo_id', -1))
 	if photoID == -1:
 		raise HTTPException(status_code=400, detail="Photo ID is required")
+	apiLog.info(f"/{photoID}/delete | Initiating deletion of Photo: {photoID}  | Username: {current_user.userName}")	
 	resp = await session.execute(select(Photo).where(Photo.photoID == photoID, Photo.photoOwnerID == current_user.userID))
 	result = resp.scalar_one_or_none()
 	if not result:
+		apiLog.warning(f"/{photoID}/delete | Photo not found in database: {photoID} / {current_user.userName} not the owner.  | Username: {current_user.userName}")	
 		raise HTTPException(status_code=404, detail="Photo not found")
 	result.isDeleted = True # type: ignore
 	await session.commit()
+	apiLog.info(f"/{photoID}/delete | Deleted photo: {photoID} | Username: {current_user.userName}")	
 	return {
 		"detail": "Deleted Post."
 	}
@@ -140,10 +150,12 @@ async def favouriteImage(request: Request, current_user: Annotated[User, Depends
 	photoID = int(request.path_params.get('photo_id', -1))
 	if photoID == -1:
 		raise HTTPException(status_code=400, detail="Photo ID is required")
+	apiLog.info(f"/{photoID}/favourite | Initiating favourite action | Username: {current_user.userName}")
 	
 	resp = await session.execute(select(Photo.photoOwnerID).where(Photo.photoID == photoID))
 	ownerID = resp.scalar_one_or_none()
 	if not ownerID:
+		apiLog.warning(f"/{photoID}/favourite | Photo not found | Username: {current_user.userName}")
 		raise HTTPException(status_code=404, detail="Photo not found")
 
 	resp = await session.execute(select(Favourite).where(Favourite.photoID == photoID, Favourite.userID == current_user.userID))
@@ -151,26 +163,39 @@ async def favouriteImage(request: Request, current_user: Annotated[User, Depends
 	if not favouriteObj:
 		session.add(Favourite(userID=current_user.userID, photoID=photoID, isFavourited=True))
 		await session.commit()
+		apiLog.info(f"/{photoID}/favourite | Added favourite to database | Username: {current_user.userName}")
 
 	if ownerID != current_user.userID:
+		apiLog.info(f"/{photoID}/favourite | Sending like notification to owner | Username: {current_user.userName}")
 		await manager.send_direct_message(packetClass.photo_liked(f"{current_user.userName} liked your Pibble!", photoID), ownerID)
 	return {'detail': 'Favourited'}
 
 @router.get('/{photo_id}/fetch')
 async def fetchPhoto(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> PhotoReturn:
-	statement = select(Photo).where(Photo.photoID == int(request.path_params.get('photo_id', -1)), Photo.isDeleted == False)
+	photoID = int(request.path_params.get('photo_id', -1))
+	apiLog.info(f"/{photoID}/fetch | Fetching single photo | Username: {current_user.userName}")
+	# TODO: make this only work for friends, as currently they can fetch anyones.
+
+	statement = select(Photo).where(Photo.photoID == photoID, Photo.isDeleted == False)
 	result = await session.execute(statement)
-	return result.scalars().first()
+	photoResult = result.scalars().first()
+	if not photoResult:
+		apiLog.warning(f"/{photoID}/fetch | Photo not found | Username: {current_user.userName}")
+	else:
+		apiLog.info(f"/{photoID}/fetch | Photo retrieved successfully | Username: {current_user.userName}")
+	return photoResult
 
 @router.post('/{photo_id}/comments/create')
 async def createComment(request: Request, commentData: CommentCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
 	photoID = int(request.path_params.get('photo_id', -1))
 	if photoID == -1:
 		raise HTTPException(status_code=400, detail="Photo ID is required")
+	apiLog.info(f"/{photoID}/comments/create | Creating comment | Username: {current_user.userName}")
 	statement = select(Photo).where(Photo.photoID == photoID)
 	result = await session.execute(statement)
 	photoObj = result.scalars().first()
 	if not photoObj:
+		apiLog.warning(f"/{photoID}/comments/create | Photo not found | Username: {current_user.userName}")
 		raise HTTPException(status_code=404, detail="Photo not found")
 	
 	USER_ID = current_user.userID
@@ -183,8 +208,10 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	session.add(commentModel)
 	await session.commit()
 	await session.refresh(commentModel)
+	apiLog.info(f"/{photoID}/comments/create | Comment saved to database | Username: {current_user.userName}")
 	
 	if photoObj.photoOwnerID != USER_ID: # type: ignore
+		apiLog.info(f"/{photoID}/comments/create | Sending notification to photo owner | Username: {current_user.userName}")
 		await manager.send_direct_message(packetClass.comment_created(f"{current_user.userName} commented on your Pibble!", photoObj.photoID), photoObj.photoOwnerID) # pyright: ignore[reportArgumentType]
 		tokens = await fetchNotificationTokens(photoObj.photoOwnerID) # type: ignore
 		await dispatchNotification(tokens, f"{current_user.userName} commented on your pibble post!", f"photos?showComment={commentModel.commentID}")
@@ -195,6 +222,7 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 async def fetchPhotoComments(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> list[CommentReturn]:
 	photoID = int(request.path_params.get('photo_id', -1))
 	if photoID == -1:
+		apiLog.warning(f"/photo_id/comments | Photo not found | Username: {current_user.userName}")
 		raise HTTPException(status_code=400, detail="Photo ID is required")
 
 	photoRes = await session.execute(
@@ -202,6 +230,7 @@ async def fetchPhotoComments(request: Request, current_user: Annotated[User, Dep
 		.where(Photo.photoID == photoID, Photo.isDeleted == False)
 	) 
 	if not photoRes.scalar_one_or_none():
+		apiLog.warning(f"/photo_id/comments | Photo not found to fetch comments | Username: {current_user.userName}")
 		raise HTTPException(status_code=404, detail="Photo not found")
 
 	result = await session.execute(
@@ -222,7 +251,9 @@ async def fetchPhotoComments(request: Request, current_user: Annotated[User, Dep
     )
     .where(Comment.photoID == photoID)
     .group_by(Comment.commentID))
-	return [CommentReturn(commentID=comment.commentID, photoID=comment.photoID, userID=comment.userID, comment=comment.comment, createdAt=comment.createdAt, likeCount=likeCount, hasLiked=isLiked) for comment, likeCount, isLiked in result.all()]
+	results = result.all()
+	apiLog.info(f"/{photoID}/comments | Returning: {len(results)} | Username: {current_user.userName}")
+	return [CommentReturn(commentID=comment.commentID, photoID=comment.photoID, userID=comment.userID, comment=comment.comment, createdAt=comment.createdAt, likeCount=likeCount, hasLiked=isLiked) for comment, likeCount, isLiked in results]
 
 @router.post('/{photo_id}/comments/{comment_id}/like')
 async def likeComment(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
@@ -239,6 +270,7 @@ async def likeComment(request: Request, current_user: Annotated[User, Depends(ge
 	result = resp.scalar_one_or_none()
 	if result:
 		result.isLiked = True # type: ignore
+		apiLog.info(f"/{commentID}/like | Updated Like to Comment ID: {commentID} | Username: {current_user.userName}")
 		await session.commit()
 		return {
 			"detail": "Liked comment"
@@ -246,14 +278,18 @@ async def likeComment(request: Request, current_user: Annotated[User, Depends(ge
 	else:
 		session.add(LikeComment(commentID=commentID, userID=current_user.userID, isLiked=True))
 		await session.commit()
+		apiLog.info(f"/{commentID}/like | Inserted Like to Comment ID: {commentID} | Username: {current_user.userName}")
 
 	commentRes = await session.execute(select(Comment).where(Comment.commentID == commentID))
 	comment = commentRes.scalar_one_or_none()
 	if not comment:
+		apiLog.warning(f"/{commentID}/like | Comment not found | Username: {current_user.userName}")
 		raise HTTPException(status_code=404, detail="Comment not found")
 	if comment.userID != current_user.userID: # type: ignore
+		apiLog.info(f"/{commentID}/like | Fetching {comment.userID} FCM tokens to send notification | Username: {current_user.userName}")
 		tokens = await fetchNotificationTokens(comment.userID) # type: ignore
-		await dispatchNotification(tokens, f"{current_user.userName} liked your comment on pibble post!", f"photos?showComment={commentID}")
+		apiLog.info(f"/{commentID}/like | Sending notification to {comment.userID}'s {len(tokens)} Tokens | Username: {current_user.userName}")
+		await dispatchNotification(tokens, f"{current_user.userName} liked your comment on a Pibble Post!", f"photos?showComment={commentID}")
 	return {
 		"detail": "Liked comment"
 	}	
