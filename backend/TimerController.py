@@ -23,7 +23,7 @@ async def handle_daily_push_notification(resultID: int):
 		allUsers = [x.userID for x in (await session.execute(select(User).where(User.deactivated == False))).scalars().all()]
 		logger.info(f"Sending Daily Notification to {len(allUsers)} Users")
 		tokens = await fetchNotificationTokens(*allUsers) # pyright: ignore[reportArgumentType]
-		await dispatchNotification(tokens, "Time to create a pibble!", "draw")
+		await dispatchNotification(tokens, "Time to create a pibble!", "draw") # type: ignore
 		logger.info(f"Pushed Daily Notification to {len(tokens)} FCM Tokens")
 		x = await session.execute(update(PushCreated).where(PushCreated.pushID == resultID).values(hasPushed=True).returning(PushCreated.pushID))
 		await session.commit()
