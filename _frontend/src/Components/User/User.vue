@@ -143,9 +143,9 @@ const userStore = useUserModel();
 }
 
 .posts {
-	justify-content: left;
+	justify-content: center;
+	width: fit-content;
 	margin: auto;
-	width: 95%;
 	margin-top: 1rem;
 	display: flex;
 	flex-basis: 33.33%;

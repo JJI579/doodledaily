@@ -101,7 +101,7 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 		 )) # type: ignore
 		results = result.scalars().all()
 		if results:
-			statement = select(Photo).where(Photo.photoOwnerID == specificUser, Photo.isDeleted == False).limit(20).order_by(Photo.photoCreatedAt.desc())
+			statement = select(Photo).where(Photo.photoOwnerID == specificUser, Photo.isDeleted == False).order_by(Photo.photoCreatedAt.desc())
 			result = await session.execute(statement)
 			photos = result.scalars().all()
 		else:
