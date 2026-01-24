@@ -19,7 +19,6 @@ export const usePhotoStore = defineStore('photos', () => {
 				const noCopy = res.data.filter((photo: PhotoReturn) => {
 					return !photos.value.includes(photo)
 				})
-				console.log(noCopy)
 				photos.value = photos.value.concat(noCopy).sort((a: PhotoReturn, b: PhotoReturn) => {
 					return new Date(b.photoCreatedAt).getTime() - new Date(a.photoCreatedAt).getTime();
 				})

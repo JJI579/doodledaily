@@ -89,7 +89,6 @@ onMounted(async () => {
 			</div>
 		</Teleport>
 	</div>
-	<CommentOverlay />
 
 
 </template>

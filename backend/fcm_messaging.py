@@ -56,10 +56,3 @@ async def dispatchNotification(tokens: list, text: str, urlSuffix: str="photos")
 				print(f"Token sent: {tokens[idx]}")
 	except Exception as e:
 		print("Error sending message:", e)
-
-# test the push
-# from routes import auth
-
-# tokens = asyncio.run(auth.fetchNotificationTokens(4))
-# print(len(tokens))
-# asyncio.run(dispatchNotification(tokens, "hello world"))

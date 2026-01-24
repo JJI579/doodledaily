@@ -29,6 +29,5 @@ export async function enableNotifications() {
 	const token = await getToken(messaging, {
 		vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
 	});
-	console.log("token", token);
 	return token;
 }

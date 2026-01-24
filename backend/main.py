@@ -7,7 +7,6 @@ from pathlib import Path
 from WebsocketManager import manager
 import secrets
 currentPath = Path.cwd()
-
 from logger import WebsocketLogger
 
 wsLogger = WebsocketLogger()
@@ -59,7 +58,6 @@ async def tempDebug(tempData: tempForm):
 	return {
 		"detail": "ok"
 	}
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

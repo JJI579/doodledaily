@@ -38,6 +38,10 @@ type UserReturn = {
 	userCreatedAt: string;
 };
 
+type UserReturnCache = UserReturn & {
+	fetchedAt: number
+}
+
 type SelfReturn = UserReturn & {
 	friends: UserReturn[];
 }
@@ -61,4 +65,4 @@ type WebsocketPacket = {
 }
 
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn, WebsocketPacket };
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn, WebsocketPacket, UserReturnCache };

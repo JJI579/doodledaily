@@ -41,13 +41,11 @@ class WebsocketManager:
 		self.connections = {}
 		
 	async def send_message(self, websocket: WebSocket, message: str):
-		print("Sending message!")
 		await websocket.send_text(message)
 
 	async def send_direct_message(self, message, userID: int):
 		if type(message) == dict:
 			message = json.dumps(message)
-		print(userID)
 		if userID in self.connections:
 			await self.send_message(self.connections[userID]['websocket'], message)
 

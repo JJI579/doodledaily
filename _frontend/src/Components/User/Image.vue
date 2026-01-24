@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { PhotoReturn } from '@/types';
 import type { PropType } from 'vue';
+import { useCommentModel } from '../Photos/comment';
 
 const props = defineProps({
 	image: {
@@ -8,11 +9,17 @@ const props = defineProps({
 		required: true
 	}
 })
+
+const commentStore = useCommentModel();
+function openComments() {
+	console.log("opening comments")
+	commentStore.show(props.image.photoID)
+}
 </script>
 
 <template>
 
-	<div class="container">
+	<div class="container" @click="openComments">
 		<div class="photo">
 			<img :src="props.image.photoData" alt="Image not found" class="img">
 		</div>

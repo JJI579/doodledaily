@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, type PropType, type Ref } from 'vue';
 import type { PhotoReturn, UserReturn } from '../../types';
-import { RouterLink } from 'vue-router';
 import router from '../../router';
 import api from '../../api';
+import { useUserModel } from './user';
 
 const props = defineProps({
 	photo: {
@@ -80,6 +80,7 @@ const relativeTime = computed(() => {
 });
 
 
+const userStore = useUserModel();
 
 const owner: Ref<UserReturn | undefined> = ref(props.user);
 
@@ -94,7 +95,7 @@ onMounted(async () => {
 		return
 	}
 	try {
-		const { data } = await api.get(`/users/${props.photo.photoOwnerID}/fetch`);
+		const data = await userStore.fetchUser(props.photo.photoOwnerID);
 		owner.value = data;
 	} catch (error: any) {
 		console.error('Failed to fetch owner', error.response?.data || error.message);

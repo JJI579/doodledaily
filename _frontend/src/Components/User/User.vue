@@ -7,6 +7,7 @@ import type { AxiosError } from 'axios';
 import Image from './Image.vue';
 import { useUserModel } from '../Photos/user';
 import { useRoute } from 'vue-router';
+import { useCommentModel } from '../Photos/comment';
 
 
 
@@ -25,13 +26,10 @@ async function initPage() {
 		router.push({ name: 'home' });
 	} else {
 		userID.value = Number(userParam)
-		const resp = await api.get(`/users/${userParam}/fetch?checkfriend=true`)
-		console.log(resp)
-		user.value = resp.data
-
-
-		const resp2 = await api.get(`/photos/fetch?user=${userParam}`)
-		photoArray.value = resp2.data
+		const userResp = await api.get(`/users/${userParam}/fetch?checkfriend=true`)
+		user.value = userResp.data
+		const photoResp = await api.get(`/photos/fetch?user=${userParam}`)
+		photoArray.value = photoResp.data
 	}
 }
 
@@ -48,8 +46,7 @@ const photoData = "true"
 async function requestFriend() {
 	if (userID.value !== -1) {
 		try {
-			const resp = await api.post(`/friends/${userID.value}/request`)
-			console.log(resp.data)
+			await api.post(`/friends/${userID.value}/request`)
 		} catch (error) {
 			const errorObj = (error as AxiosError).response?.data;
 			if (errorObj && typeof errorObj === 'object' && "detail" in errorObj) {
@@ -60,6 +57,7 @@ async function requestFriend() {
 }
 
 const userStore = useUserModel();
+
 
 </script>
 
@@ -77,7 +75,7 @@ const userStore = useUserModel();
 				<h2 class="name">{{ user?.userName }}</h2>
 			</div>
 			<button class="button" @click="requestFriend()"
-				v-if="!userStore.friendsDict.get(user?.userID) && !(user?.userID == userStore.user?.userID)">Add
+				:class="{ 'button--active': !userStore.friendsDict.get(user?.userID) && !(user?.userID == userStore.user?.userID) }">Add
 				Friend
 			</button>
 
@@ -137,7 +135,11 @@ const userStore = useUserModel();
 	min-height: 40px;
 	outline: none;
 	border: none;
+	display: none;
+}
 
+.button--active {
+	display: initial;
 }
 
 .posts {
@@ -148,5 +150,6 @@ const userStore = useUserModel();
 	display: flex;
 	flex-basis: 33.33%;
 	flex-wrap: wrap;
+	gap: 3px;
 }
 </style>

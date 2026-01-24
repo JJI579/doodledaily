@@ -7,6 +7,7 @@ import { useWebsocket } from './Websocket';
 import { usePopupModel } from './Components/Popup/popup';
 import Popup from './Components/Popup/Popup.vue';
 import { useUserModel } from './Components/Photos/user';
+import CommentOverlay from './Components/Photos/CommentOverlay.vue';
 
 
 const userStore = useUserModel();
@@ -79,14 +80,7 @@ function wasHold() {
 const popupStore = usePopupModel();
 const activeScreen = computed(() => router.currentRoute.value.name);
 
-function toPhotos() {
-	if (router.currentRoute.value.name !== 'Photos') {
-		router.push({ name: "Photos" })
-	}
-}
-function toSelfUser() {
-	router.push('/user?id=' + localStorage.getItem('userID'))
-}
+
 </script>
 
 <template>
@@ -110,24 +104,28 @@ function toSelfUser() {
 			</div>
 		</div>
 	</div>
+	<CommentOverlay />
 	<div class="content">
 		<RouterView />
 	</div>
 	<div class="bottom" v-if="authenticated">
 
-		<div class="button" :class="{ 'button--active': activeScreen == 'Photos' }" @click="toPhotos()">
+		<RouterLink class="button" :class="{ 'button--active': activeScreen == 'Photos' }" :to="{ name: 'Photos' }">
 			<div class="button__icon">
 				<i class="pi pi-home"></i>
 			</div>
 			<p class="button__title">Home</p>
-		</div>
-		<div class="button" @click="toSelfUser()">
+		</RouterLink>
+		<!-- '/user?id=' + localStorage.getItem('userID') -->
+		<RouterLink class="button" :to="{ name: 'user', query: { id: userStore.user?.userID } }"
+			:class="{ 'button--active': activeScreen == 'user' }">
 			<div class="button__icon">
 				<i class="pi pi-user"></i>
 			</div>
 			<p class="button__title">Profile</p>
-		</div>
+		</RouterLink>
 	</div>
+
 
 
 </template>
@@ -192,6 +190,7 @@ function toSelfUser() {
 	transition: 0.5s ease all;
 	cursor: pointer;
 	flex: 1;
+	text-decoration: none;
 }
 
 

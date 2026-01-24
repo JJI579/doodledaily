@@ -122,7 +122,4 @@ async def fetchUsers(request: Request, current_user: Annotated[User, Depends(get
 		)
 		), isouter=True).where(User.deactivated==False)
 	resp = await session.execute(statement)
-	# print(resp.all()[0])
-	# print([x.status for x in resp.all()])
-	
 	return [RequestFetch(wasSent=wasSent, status=friendStatus if friendStatus else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user, friendStatus, wasSent in resp.all() if user.userID != current_user.userID]

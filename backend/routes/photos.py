@@ -85,7 +85,6 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 
 	specificUser = request.query_params.get('user')
 	if specificUser != None:
-		print("------------" + str(specificUser))
 		apiLog.info(f"/photos/fetch | Specific user parameter found: {specificUser}  | Username: {current_user.userName} | {current_user.userID}")
 		result = await session.execute(select(Friend).where(
 			and_(

@@ -2,6 +2,7 @@
 import api from '@/api';
 import type { CommentReturn, UserReturn } from '@/types';
 import { computed, onMounted, ref, type PropType } from 'vue';
+import { useUserModel } from '../Photos/user';
 
 const props = defineProps({
 	comment: {
@@ -48,9 +49,12 @@ async function likeComment() {
 		hasLiked.value = true
 	}
 }
+
+const userStore = useUserModel();
+
 onMounted(async () => {
 	try {
-		const { data } = await api.get(`/users/${props.comment.userID}/fetch`);
+		const data = await userStore.fetchUser(props.comment.userID);
 		user.value = data;
 	} catch (error: any) {
 		console.error('Failed to fetch user', error.response?.data || error.message);

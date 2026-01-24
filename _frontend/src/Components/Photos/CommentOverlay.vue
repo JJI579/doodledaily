@@ -18,10 +18,8 @@ async function loadComments(photoID: number) {
 	try {
 		const { data } = await api.get(`/photos/${photoID}/comments`);
 		if ('detail' in data) {
-			console.log(data.detail);
 			return;
 		}
-
 		comments.value = data;
 	} catch (error: any) {
 		console.error('Failed to fetch comments', error.response?.data || error.message);
@@ -93,7 +91,7 @@ function removeParam() {
 					</div>
 					<div v-else class="nothing">
 						<h2 class="nothing__1">No Comments...</h2>
-						<h3 class="nothing__2">Make a guess?</h3>
+						<h4 class="nothing__2">Why not make one?</h4>
 					</div>
 
 
@@ -153,8 +151,6 @@ function removeParam() {
 	margin-inline: .5rem;
 }
 
-
-
 .comments {
 	display: flex;
 	flex-direction: column;
@@ -199,6 +195,7 @@ function removeParam() {
 }
 
 .nothing {
+	height: 35%;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
