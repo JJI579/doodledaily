@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Photo, Comment, Favourite, Friend, LikeComment
 from funcs import get_current_user, get_session
 from sqlalchemy import case, func
-from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn
+from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn, EditPhoto
 import secrets
 
 from base64 import b64decode
@@ -44,7 +44,7 @@ photosDir = Path.cwd() / "photos"
 photosDir.mkdir(exist_ok=True)
 
 @router.post('/create')
-async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)):
+async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> PhotoReturn:
 	photoName = f"{secrets.token_urlsafe(64)}.png"
 	apiLog.info(f"/photos/create | Creating Photo | Username: {current_user.userName}")
 	with open(photosDir / photoName, "wb") as f:
@@ -54,6 +54,7 @@ async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Anno
 	photoObject = Photo(
 		photoName=photoData.photoName,
 		photoType=photoData.photoType,
+		photoCaption=photoData.photoCaption,
 		photoData=photoURL,
 		photoOwnerID=current_user.userID
 	)
@@ -69,6 +70,7 @@ async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Anno
 	))
 	results = resp.scalars().all()
 	await session.commit()
+	await session.refresh(photoObject)
 	apiLog.info(f"/photos/create | Committed photo to database | Username: {current_user.userName}")
 	if results:
 		friend_ids = [x.senderID if x.senderID != current_user.userID else x.receiverID for x in results] # type: ignore
@@ -78,6 +80,7 @@ async def savePhoto(request: Request, photoData: PhotoCreate, current_user: Anno
 		await dispatchNotification(tokens, f"{current_user.userName} has posted a Pibble!")
 	await manager.broadcast(packetClass.photo_created(f"{current_user.userName} has posted a Pibble!"), current_user.userID) # pyright: ignore[reportArgumentType]
 	apiLog.info(f"/photos/create | Broadcasting to active users | Username: {current_user.userName}")
+	return photoObject
 
 @router.get('/fetch')
 async def fetch_photos(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)) -> Sequence[Union[LikesPhotoReturn, PhotoReturn]]:
@@ -152,11 +155,42 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 		statement = statement.where(Photo.photoCreatedAt >= after)
 	result = await session.execute(statement)
 	x =  [
-		LikesPhotoReturn(commentCount=commentcount, photoData=photo.photoData, photoCreatedAt=photo.photoCreatedAt, photoID=photo.photoID, photoName=photo.photoName, photoOwnerID=photo.photoOwnerID, photoType=photo.photoType, isFavourited=is_fav, likesCount=likescount) for photo, is_fav, likescount, commentcount in result.all() 
+		LikesPhotoReturn(commentCount=commentcount, photoData=photo.photoData, photoCreatedAt=photo.photoCreatedAt, photoID=photo.photoID, photoName=photo.photoName, photoOwnerID=photo.photoOwnerID, photoType=photo.photoType, isFavourited=is_fav, likesCount=likescount, photoCaption=photo.photoCaption) for photo, is_fav, likescount, commentcount in result.all() 
 	]
 	apiLog.info(f"/photos/fetch | Returning {len(x)} Photos | Username: {current_user.userName}")
 	apiLog.info(f"/photos/fetch | -- Photos Fetch End -- | Username: {current_user.userName}")
 	return x
+
+@router.patch('/{photoID}/edit')
+async def editPhoto(request: Request, formData: EditPhoto, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
+	photoID = int(request.path_params.get('photoID', -1))
+	if photoID == -1:
+		raise HTTPException(status_code=400, detail="Photo ID is required")
+	apiLog.info(f"/{photoID}/edit | Initiating edit of Photo: {photoID} | Username: {current_user.userName}")
+	
+	resp = await session.execute(select(Photo).where(Photo.photoID == photoID, Photo.photoOwnerID == current_user.userID))
+	photoResult = resp.scalar_one_or_none()
+	if not photoResult:
+		apiLog.warning(f"/{photoID}/edit | Photo not found in database: {photoID} / {current_user.userName} not the owner. | Username: {current_user.userName}")
+		raise HTTPException(status_code=404, detail="Photo not found")
+	
+	
+	if formData.title is not None:
+		photoResult.photoName = formData.title # type: ignore
+		apiLog.info(f"/{photoID}/edit | Updated title to: {formData.title} | Username: {current_user.userName}")
+	
+	caption = formData.caption
+	if caption is None:
+		caption = ""
+	caption = caption[:60]
+	print(caption)
+	photoResult.photoCaption = caption # type: ignore
+	apiLog.info(f"/{photoID}/edit | Updated caption | Username: {current_user.userName}")
+	await session.commit()
+	apiLog.info(f"/{photoID}/edit | Photo updated successfully | Username: {current_user.userName}")
+	return {
+		"detail": "Photo updated successfully"
+	}
 
 @router.post('/{photo_id}/delete')
 async def deletePhoto(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
@@ -325,3 +359,4 @@ async def likeComment(request: Request, current_user: Annotated[User, Depends(ge
 		"detail": "Liked comment"
 	}	
 		
+

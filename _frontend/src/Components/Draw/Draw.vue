@@ -37,9 +37,16 @@ const saveCanvas = async () => {
 			photoType: 'drawing',
 			photoData: imageData,
 		});
+
+		if ('photoID' in data) {
+			console.log(`Photo ID: ${data.photoID}`)
+			router.replace({ name: 'Edit', query: { id: data.photoID } });
+		}
+
+
 		canvas.value.clear();
 		localStorage.setItem('image', '');
-		router.back();
+		// router.back();
 	} catch (error: any) {
 		console.error('Failed to save canvas', error.response?.data || error.message);
 	}

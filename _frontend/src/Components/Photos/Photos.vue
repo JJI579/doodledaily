@@ -12,11 +12,6 @@ import { useUserModel } from './user';
 
 const photoStore = usePhotoStore();
 
-
-
-
-
-
 const showOptions = ref(false);
 const focusedPhoto = ref(-1);
 function toggleOptions(photoID: number) {
@@ -31,7 +26,7 @@ async function deletePost() {
 		showOptions.value = false
 		setTimeout(() => {
 			nextTick().then(() => {
-				photoStore.fetch()
+				photoStore.hardFetch()
 			}
 			);
 
@@ -49,11 +44,7 @@ const userStore = useUserModel();
 
 const user = ref<SelfReturn | null>(null);
 onMounted(async () => {
-
-
-
 	await userStore.fetch();
-	await photoStore.fetch();
 
 	const params = new URLSearchParams(window.location.search);
 	const commentParam = params.get('showComment')
@@ -76,13 +67,18 @@ onMounted(async () => {
 			</button>
 		</div>
 		<div class="photos">
-			<Photo :photo="photo" v-for="photo in photoStore.photos" class="photo" @selectmenu="toggleOptions"
-				@comment="showComments" :key="photo.photoID" :user="userStore.friendsDict.get(photo.photoOwnerID)" />
+			<Photo :photo="obj[1]"
+				v-for="(obj, index) in [...photoStore.photoDict.entries()].sort((a, b) => new Date(b[1].photoCreatedAt).getTime() - new Date(a[1].photoCreatedAt).getTime())"
+				class="photo" @selectmenu="toggleOptions" @comment="showComments" :key="obj[1].photoID"
+				:user="userStore.friendsDict.get(obj[1].photoOwnerID)" />
 		</div>
 		<Teleport to="body">
 			<div class="popup__wrapper">
 				<div class="popup" v-if="showOptions">
 					<div class="popup__content">
+						<RouterLink class="popup__button" :to="{ name: 'Edit', query: { id: focusedPhoto } }">Edit
+							Caption</RouterLink>
+						<hr class="popup__hr">
 						<button class="popup__button" @click="deletePost">Delete</button>
 					</div>
 				</div>
@@ -180,24 +176,29 @@ onMounted(async () => {
 	height: 100%;
 	display: flex;
 	justify-content: center;
-	align-items: flex-start;
+	align-items: center;
 	flex-direction: column;
 }
 
-.popup__content hr {
-	width: 85%;
-}
-
 .popup__button {
-	width: 50%;
+	width: 100%;
+	border: none;
 	margin: auto;
 	height: 40px;
-	border: 2px solid var(--clr-danger-a0);
 	background: none;
-	border-radius: 8px;
 	font-size: 16px;
 	cursor: pointer;
 	color: white;
+	text-decoration: none;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.popup__hr {
+	width: 80%;
+	margin: 0;
+	padding: 0;
 }
 
 @media (min-width: 1024px) {

@@ -5,6 +5,7 @@ export default debug;
 type PhotoReturn = {
 	photoID: number;
 	photoName: string;
+	photoCaption: string;
 	photoType: string;
 	photoData: string;
 	photoOwnerID: number;

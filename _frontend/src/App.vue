@@ -8,6 +8,7 @@ import { usePopupModel } from './Components/Popup/popup';
 import Popup from './Components/Popup/Popup.vue';
 import { useUserModel } from './Components/Photos/user';
 import CommentOverlay from './Components/Photos/CommentOverlay.vue';
+import { usePhotoStore } from './Components/Photos/photos';
 
 
 const userStore = useUserModel();
@@ -22,6 +23,8 @@ const authenticated = ref(false);
 
 onMounted(async () => {
 	const websocket = useWebsocket();
+	const photoStore = usePhotoStore();
+	await photoStore.fetch()
 
 	// forces update incase app has been updated.
 	var lastRefreshed = localStorage.getItem('last_refreshed');

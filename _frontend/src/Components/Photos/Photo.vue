@@ -29,6 +29,7 @@ const photoCreatedAtDate = computed(() => {
 	return props.photo.photoCreatedAt;
 });
 
+
 const likesCount = ref(props.photo.likesCount);
 const emit = defineEmits(['favourited', 'selectmenu', 'comment']);
 const isFavourited = ref(props.photo.isFavourited);
@@ -155,9 +156,13 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 					<span class="pi pi-download"></span>
 				</button>
 			</div>
-			<div class="photo__caption">
-				Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam libero hic harum, quo ea ad laudantium
-				itaque qui ut impedit. Fugit ipsum fugiat reprehenderit enim provident voluptatum quam natus sint?
+			<div class="photo__caption" v-if="photo.photoCaption.trim().length != 0">
+				<div v-if="photo.photoName" class="photo__title">
+					{{ photo.photoName }}
+					<br>
+				</div>
+
+				{{ photo.photoCaption }}
 			</div>
 			<div class="photo__time">
 				<p class="text">{{ relativeTime }}</p>
@@ -258,6 +263,7 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 	width: 95%;
 	font-size: small;
 	margin-bottom: 0.5rem;
+	color: grey;
 }
 
 .text {
@@ -270,6 +276,18 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 	display: flex;
 	gap: .5rem;
 	width: 100%;
+}
+
+.photo__title {
+	font-weight: bold;
+}
+
+.photo__caption {
+	font-size: 14px;
+}
+
+.bold {
+	font-weight: bold;
 }
 
 @media (min-width: 1024px) {

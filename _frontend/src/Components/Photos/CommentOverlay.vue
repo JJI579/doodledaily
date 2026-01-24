@@ -180,7 +180,6 @@ function removeParam() {
 	font-size: 16px;
 	height: 2rem;
 	flex: 1;
-
 }
 
 .submit {

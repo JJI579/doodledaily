@@ -53,6 +53,8 @@ class Photo(Base):
 	photoType = Column(String, nullable=False)
 	photoCreatedAt = Column(DateTime, default=datetime.utcnow)
 	photoData = Column(String, nullable=False)
+	# alter table tblPhotos add column photoCaption default "" not null;
+	photoCaption = Column(String, nullable=False, default="")
 	photoOwnerID = Column(Integer, ForeignKey("tblUsers.userID"), nullable=False)
 	owner = relationship("User", back_populates="photos")
 	isDeleted = Column(Boolean, default=False)
