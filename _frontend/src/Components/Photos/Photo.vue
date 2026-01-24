@@ -155,6 +155,10 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 					<span class="pi pi-download"></span>
 				</button>
 			</div>
+			<div class="photo__caption">
+				Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam libero hic harum, quo ea ad laudantium
+				itaque qui ut impedit. Fugit ipsum fugiat reprehenderit enim provident voluptatum quam natus sint?
+			</div>
 			<div class="photo__time">
 				<p class="text">{{ relativeTime }}</p>
 			</div>
@@ -243,8 +247,8 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 }
 
 .photo__content {
-	padding-left: 2rem;
-	width: 100%;
+	margin: auto;
+	width: 95%;
 	display: flex;
 	flex-direction: column;
 	gap: .75rem;
