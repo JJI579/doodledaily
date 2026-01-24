@@ -3,7 +3,7 @@ from models import Token, User, Friend
 from sqlalchemy import and_, select, or_
 from database import get_session
 import json
-
+from typing import Optional
 
 class WebsocketPacket:
 	def createPacket(self, packetType: str, content):
@@ -35,6 +35,12 @@ class WebsocketPacket:
 
 		return self.createPacket("PHOTO_LIKE", x)
 	
+	def photo_update(self, photoID: int):
+		x = {
+			'photoID': photoID
+		}
+		return self.createPacket("PHOTO_UPDATE", x)
+	
 class WebsocketManager:
 
 	def __init__(self) -> None:
@@ -49,16 +55,24 @@ class WebsocketManager:
 		if userID in self.connections:
 			await self.send_message(self.connections[userID]['websocket'], message)
 
-	async def broadcast(self, message, userID: int):
+	async def broadcast(self, message, userID: Optional[int]=None):
+		origMessage = message
 		if type(message) == dict:
 			message = json.dumps(message)
-		# NEED TO MAKE THIS PERSONALISED PER CONNECTION
-		if userID in self.connections:
-			for toSendID in self.connections[userID]['friends']:
-				if toSendID in self.connections:
-					await self.send_message(self.connections[toSendID]['websocket'], message)
+		if userID is not None:
+
+			# NEED TO MAKE THIS PERSONALISED PER CONNECTION
+			if userID in self.connections:
+				for toSendID in self.connections[userID]['friends']:
+					if toSendID in self.connections:
+						await self.send_message(self.connections[toSendID]['websocket'], message)
+			if origMessage.get('t') == 'PHOTO_UPDATE':
+				await self.send_message(self.connections[userID]['websocket'], message)
+			else:
+				return
 		else:
-			return
+			for connection in self.connections:
+				await self.send_message(self.connections[connection]['websocket'], message)
 
 	async def remove(self, userID: int):
 		if userID in self.connections:

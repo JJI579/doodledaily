@@ -55,6 +55,15 @@ onMounted(async () => {
 	}
 });
 
+const sortedPhotos = computed(() =>
+	[...photoStore.photoDict.entries()].sort(
+		(a, b) =>
+			new Date(b[1].photoCreatedAt).getTime() -
+			new Date(a[1].photoCreatedAt).getTime()
+	)
+)
+
+
 </script>
 
 <template>
@@ -67,10 +76,8 @@ onMounted(async () => {
 			</button>
 		</div>
 		<div class="photos">
-			<Photo :photo="obj[1]"
-				v-for="(obj, index) in [...photoStore.photoDict.entries()].sort((a, b) => new Date(b[1].photoCreatedAt).getTime() - new Date(a[1].photoCreatedAt).getTime())"
-				class="photo" @selectmenu="toggleOptions" @comment="showComments" :key="obj[1].photoID"
-				:user="userStore.friendsDict.get(obj[1].photoOwnerID)" />
+			<Photo :photo="obj[1]" v-for="(obj, index) in sortedPhotos" class="photo" @selectmenu="toggleOptions"
+				@comment="showComments" :key="obj[1].photoID" :user="userStore.friendsDict.get(obj[1].photoOwnerID)" />
 		</div>
 		<Teleport to="body">
 			<div class="popup__wrapper">

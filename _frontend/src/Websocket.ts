@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import debug, { type WebsocketPacket } from "./types";
 import { usePopupModel } from "./Components/Popup/popup";
-import router from "./router";
 import { usePhotoStore } from "./Components/Photos/photos";
 
 
@@ -34,21 +33,27 @@ export const useWebsocket = defineStore("websocket", () => {
 	websocket.onmessage = (message) => {
 
 		const data: WebsocketPacket = JSON.parse(message.data)
+		console.log(data)
 		switch (data.t) {
 			case "PHOTO_CREATE":
 				popup.showPopup(data.d.text)
 				photos.fetch()
-
 				break
 			case "FRIEND_REQUEST":
 				popup.showPopup(data.d.text)
 				break
 			case "COMMENT_CREATE":
 				popup.showPopup(data.d.text, data)
+				photos.fetchPhoto(data.d.onclick)
 				break
 
 			case "PHOTO_LIKE":
 				popup.showPopup(data.d.text)
+				photos.fetchPhoto(data.d.photoID)
+				break
+
+			case "PHOTO_UPDATE":
+				photos.fetchPhoto(data.d.photoID)
 				break
 		}
 	};

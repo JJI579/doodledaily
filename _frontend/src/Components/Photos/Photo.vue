@@ -30,7 +30,7 @@ const photoCreatedAtDate = computed(() => {
 });
 
 
-const likesCount = ref(props.photo.likesCount);
+const likesCount = computed(() => props.photo.likesCount);
 const emit = defineEmits(['favourited', 'selectmenu', 'comment']);
 const isFavourited = ref(props.photo.isFavourited);
 
@@ -39,14 +39,7 @@ const favouriteImage = async () => {
 	if (isFavourited.value) return;
 	try {
 		const { data } = await api.post(`/photos/${props.photo.photoID}/favourite`);
-
-		if ('detail' in data) {
-			if (data.detail === 'Favourited') {
-				isFavourited.value = true;
-				likesCount.value++;
-			}
-		}
-
+		isFavourited.value = true
 		// Emit event immediately after response
 		emit('favourited', props.photo.photoID);
 	} catch (error: any) {
@@ -156,7 +149,7 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 					<span class="pi pi-download"></span>
 				</button>
 			</div>
-			<div class="photo__caption" v-if="photo.photoCaption.trim().length != 0">
+			<div class="photo__caption">
 				<div v-if="photo.photoName" class="photo__title">
 					{{ photo.photoName }}
 					<br>

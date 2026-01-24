@@ -188,6 +188,7 @@ async def editPhoto(request: Request, formData: EditPhoto, current_user: Annotat
 	apiLog.info(f"/{photoID}/edit | Updated caption | Username: {current_user.userName}")
 	await session.commit()
 	apiLog.info(f"/{photoID}/edit | Photo updated successfully | Username: {current_user.userName}")
+	await manager.broadcast(packetClass.photo_update(photoID), photoResult.photoOwnerID) # type: ignore
 	return {
 		"detail": "Photo updated successfully"
 	}
@@ -229,26 +230,57 @@ async def favouriteImage(request: Request, current_user: Annotated[User, Depends
 		session.add(Favourite(userID=current_user.userID, photoID=photoID, isFavourited=True))
 		await session.commit()
 		apiLog.info(f"/{photoID}/favourite | Added favourite to database | Username: {current_user.userName}")
-
-	if ownerID != current_user.userID:
+	await manager.broadcast(packetClass.photo_update(photoID), ownerID)
+	if ownerID != current_user.userID:	
 		apiLog.info(f"/{photoID}/favourite | Sending like notification to owner | Username: {current_user.userName}")
 		await manager.send_direct_message(packetClass.photo_liked(f"{current_user.userName} liked your Pibble!", photoID), ownerID)
 	return {'detail': 'Favourited'}
 
 @router.get('/{photo_id}/fetch')
-async def fetchPhoto(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> PhotoReturn:
+async def fetchPhoto(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)) -> LikesPhotoReturn:
 	photoID = int(request.path_params.get('photo_id', -1))
 	apiLog.info(f"/{photoID}/fetch | Fetching single photo | Username: {current_user.userName}")
 	# TODO: make this only work for friends, as currently they can fetch anyones.
 
-	statement = select(Photo).where(Photo.photoID == photoID, Photo.isDeleted == False)
+	statement = (
+        select(
+            Photo,
+            # isliked for the current user
+            func.max(case((Favourite.userID == current_user.userID, 1), else_=0)).label("isliked"),
+            # total likes
+            func.count(func.distinct(Favourite.userID)).label("likes_count"),
+            # total comments
+            func.count(func.distinct(Comment.commentID)).label("comments_count")
+        )
+        .join(Favourite, (Favourite.photoID == Photo.photoID) & (Favourite.isFavourited == True), isouter=True)
+        .join(Comment, Comment.photoID == Photo.photoID, isouter=True)
+        .group_by(
+            Photo.photoID,
+            Photo.photoName,
+            Photo.photoType,
+            Photo.photoCreatedAt,
+            Photo.photoData,
+            Photo.photoOwnerID
+        )
+		.where(
+			Photo.photoID == photoID,
+			Photo.isDeleted == False, 
+			or_(
+				friend_exists(current_user.userID, Photo.photoOwnerID), # type: ignore
+				Photo.photoOwnerID == current_user.userID
+			)
+		)
+    )
 	result = await session.execute(statement)
-	photoResult = result.scalars().first()
-	if not photoResult:
+	results = result.all()
+	
+	if not results:
 		apiLog.warning(f"/{photoID}/fetch | Photo not found | Username: {current_user.userName}")
 	else:
 		apiLog.info(f"/{photoID}/fetch | Photo retrieved successfully | Username: {current_user.userName}")
-	return photoResult
+	return [
+		LikesPhotoReturn(commentCount=commentcount, photoData=photo.photoData, photoCreatedAt=photo.photoCreatedAt, photoID=photo.photoID, photoName=photo.photoName, photoOwnerID=photo.photoOwnerID, photoType=photo.photoType, isFavourited=is_fav, likesCount=likescount, photoCaption=photo.photoCaption) for photo, is_fav, likescount, commentcount in results
+	][0]
 
 @router.post('/{photo_id}/comments/create')
 async def createComment(request: Request, commentData: CommentCreate, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
@@ -274,7 +306,7 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	await session.commit()
 	await session.refresh(commentModel)
 	apiLog.info(f"/{photoID}/comments/create | Comment saved to database | Username: {current_user.userName}")
-	
+	await manager.broadcast(packetClass.photo_update(photoObj.photoID), photoObj.photoOwnerID) # type: ignore
 	if photoObj.photoOwnerID != USER_ID: # type: ignore
 		apiLog.info(f"/{photoID}/comments/create | Sending notification to photo owner | Username: {current_user.userName}")
 		await manager.send_direct_message(packetClass.comment_created(f"{current_user.userName} commented on your Pibble!", photoObj.photoID), photoObj.photoOwnerID) # pyright: ignore[reportArgumentType]

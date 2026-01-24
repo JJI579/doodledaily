@@ -26,6 +26,16 @@ export const usePhotoStore = defineStore('photos', () => {
 		}
 	}
 
+	async function fetchPhoto(photoID: number) {
+		try {
+			const res = await api.get(`/photos/${photoID}/fetch`);
+			console.log(res.data)
+			photoDict.set(res.data.photoID, res.data);
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
 	async function hardFetch() {
 		// instead of fetching using query of time, force fetch all images
 		try {
@@ -40,6 +50,6 @@ export const usePhotoStore = defineStore('photos', () => {
 	}
 
 
-	return { hardFetch, fetch, photoDict }
+	return { hardFetch, fetch, fetchPhoto, photoDict }
 
 })
