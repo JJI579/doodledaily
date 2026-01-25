@@ -67,7 +67,8 @@ class WebsocketManager:
 					if toSendID in self.connections:
 						await self.send_message(self.connections[toSendID]['websocket'], message)
 			if origMessage.get('t') == 'PHOTO_UPDATE':
-				await self.send_message(self.connections[userID]['websocket'], message)
+				if userID in self.connections:
+					await self.send_message(self.connections[userID]['websocket'], message)
 			else:
 				return
 		else:

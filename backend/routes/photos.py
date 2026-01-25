@@ -287,6 +287,8 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 	photoID = int(request.path_params.get('photo_id', -1))
 	if photoID == -1:
 		raise HTTPException(status_code=400, detail="Photo ID is required")
+	if len(commentData.comment.strip()) == 0:
+		raise HTTPException(status_code=400, detail="Comment cannot be empty")
 	apiLog.info(f"/{photoID}/comments/create | Creating comment | Username: {current_user.userName}")
 	statement = select(Photo).where(Photo.photoID == photoID)
 	result = await session.execute(statement)

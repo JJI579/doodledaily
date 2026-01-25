@@ -44,27 +44,34 @@ watch(() => comment.photoID, (newval) => {
 const message = ref();
 const commentsRef = ref();
 
+const inprogress = ref(false)
 const submit = async () => {
 	// Get photoID from URL
 	const photoID = comment.photoID;
+	if (inprogress.value === false) {
+		try {
+			inprogress.value = true
+			// POST comment
+			const resp = await api.post(`/photos/${photoID}/comments/create`, {
+				comment: message.value,
+			});
 
-	try {
-		// POST comment
-		await api.post(`/photos/${photoID}/comments/create`, {
-			comment: message.value,
-		});
 
-		await loadComments(Number(photoID));
-		await nextTick();
-		commentsRef.value.scroll({
-			top: commentsRef.value.scrollHeight + 5,
-			behaviour: 'smooth'
-		})
+			await loadComments(Number(photoID));
+			await nextTick();
+			commentsRef.value.scroll({
+				top: commentsRef.value.scrollHeight + 5,
+				behaviour: 'smooth'
+			})
 
-		message.value = '';
-	} catch (error: any) {
-		console.error('Failed to submit comment', error.response?.data || error.message);
+			inprogress.value = false
+			message.value = '';
+		} catch (error: any) {
+			console.error('Failed to submit comment', error.response?.data || error.message);
+			inprogress.value = false
+		}
 	}
+
 };
 
 
@@ -155,7 +162,7 @@ function removeParam() {
 	display: flex;
 	flex-direction: column;
 	max-height: 45vh;
-	overflow-y: hidden;
+	overflow-y: scroll;
 	gap: 0.5rem;
 	margin-top: 1rem;
 	scroll-behavior: smooth;
