@@ -1,5 +1,5 @@
-
-const debug = false;
+const apiUrl = import.meta.env.VITE_ENVIRONMENT;
+const debug = apiUrl == "dev";
 export default debug;
 
 type PhotoReturn = {
