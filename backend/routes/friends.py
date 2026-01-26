@@ -47,6 +47,7 @@ async def requestFriend(request: Request, user: Annotated[User, Depends(get_curr
 		await session.commit()
 		return Response(status_code=204)
 
+# this is a route to send a friend request
 @router.post('/{user_id}/accept')
 async def acceptFriend(request: Request, user: Annotated[User, Depends(get_current_user)], session: AsyncSession = Depends(get_session)):
 	senderID = int(request.path_params.get('user_id', -1))
