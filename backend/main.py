@@ -1,13 +1,13 @@
 from fastapi import FastAPI, WebSocket
 from contextlib import asynccontextmanager
-from database import init_db, close_db, init_db_sync
+from modules.database import init_db, close_db, init_db_sync
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from WebsocketManager import manager
+from modules.WebsocketManager import manager
 import secrets
 currentPath = Path.cwd()
-from logger import WebsocketLogger
+from modules.logger import WebsocketLogger
 
 wsLogger = WebsocketLogger()
 

@@ -3,19 +3,19 @@ from sqlmodel import select, and_, or_, exists
 from typing import Annotated, Union, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Photo, Comment, Favourite, Friend, LikeComment
-from funcs import get_current_user, get_session
+from modules.funcs import get_current_user, get_session
 from sqlalchemy import case, func
 from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn, EditPhoto
 import secrets
 
 from base64 import b64decode
 from .auth import fetchNotificationTokens
-from fcm_messaging import dispatchNotification
+from modules.fcm_messaging import dispatchNotification
 import datetime
 
-from WebsocketManager import manager, packetClass
+from modules.WebsocketManager import manager, packetClass
 
-from logger import APILogger
+from modules.logger import APILogger
 
 apiLog = APILogger()
 

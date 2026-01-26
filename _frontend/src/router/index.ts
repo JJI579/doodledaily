@@ -1,4 +1,3 @@
-import App from '@/App.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '@/Components/Login/Login.vue';
 import Draw from '@/Components/Draw/Draw.vue';

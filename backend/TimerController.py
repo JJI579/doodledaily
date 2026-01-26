@@ -5,7 +5,7 @@ from sqlalchemy import select, update, and_
 from models import PushCreated, User
 from database import get_session, init_db
 import asyncio
-from logger import DailyNotificationLogger
+from modules.logger import DailyNotificationLogger
 
 logger = DailyNotificationLogger(name="DailyNotificationLogger", logFileName="daily_notification.log")
 

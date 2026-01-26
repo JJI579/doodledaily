@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User,  Friend
-from funcs import get_current_user, get_session
+from modules.funcs import get_current_user, get_session
 
 router = APIRouter(
 	prefix="/notifications",

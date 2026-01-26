@@ -14,9 +14,7 @@ const emit = defineEmits(['colour'])
 
 <template>
 	<div class="colour" @click="emit('colour', props.colour)" :style="{ backgroundColor: `#${props.colour}` }">
-
 	</div>
-
 </template>
 
 

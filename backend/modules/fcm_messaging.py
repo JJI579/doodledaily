@@ -2,8 +2,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, messaging
 from pathlib import Path
-import asyncio
-from funcs import get_session
+from modules.funcs import get_session
 
 # database stuff
 from sqlmodel import delete

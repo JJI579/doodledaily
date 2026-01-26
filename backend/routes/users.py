@@ -3,7 +3,7 @@ from sqlmodel import select
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Friend
-from funcs import get_current_user, get_session
+from modules.funcs import get_current_user, get_session
 from .schema import UserFetch, ExtendedUserFetch, RequestFetch, SelfFetch
 from sqlalchemy import case, or_, and_
 from typing import Union

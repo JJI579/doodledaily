@@ -3,9 +3,9 @@ from sqlmodel import select, update, and_
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Friend
-from funcs import get_current_user, get_session
+from modules.funcs import get_current_user, get_session
 from .auth import fetchNotificationTokens
-from fcm_messaging import dispatchNotification
+from modules.fcm_messaging import dispatchNotification
 
 router = APIRouter(
 	prefix="/friends",

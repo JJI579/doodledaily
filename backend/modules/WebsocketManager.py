@@ -1,7 +1,7 @@
 from fastapi.websockets import WebSocket
 from models import Token, User, Friend
 from sqlalchemy import and_, select, or_
-from database import get_session
+from modules.database import get_session
 import json
 from typing import Optional
 

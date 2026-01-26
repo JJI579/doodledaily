@@ -6,11 +6,11 @@ import hashlib
 import secrets
 import datetime
 import os
-from funcs import get_session, get_current_user
+from modules.funcs import get_session, get_current_user
 from .schema import refreshForm, loginForm, registerForm, TokenForm
-from Authentication import Authentication
+from modules.Authentication import Authentication
 from sqlalchemy import update
-from logger import APILogger
+from modules.logger import APILogger
 
 apiLog = APILogger()
 

@@ -1,4 +1,4 @@
-const apiUrl = import.meta.env.VITE_ENVIRONMENT;
+const apiUrl = import.meta.env.VITE_ENVIRONMENT || "not";
 const debug = apiUrl == "dev";
 export default debug;
 
