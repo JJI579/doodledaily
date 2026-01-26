@@ -2,7 +2,7 @@ import axios, { AxiosError, type AxiosInstance } from 'axios';
 import router from './router';
 import debug from './types';
 
-const BASE_URL = debug ? 'http://127.0.0.1:8000' : 'https://pibble.pics/api';
+const BASE_URL = debug ? 'http://127.0.0.1:8000' : import.meta.env.VITE_PROD_API_URL;
 
 const api: AxiosInstance = axios.create({
 	baseURL: BASE_URL,
