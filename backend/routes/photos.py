@@ -314,6 +314,26 @@ async def createComment(request: Request, commentData: CommentCreate, current_us
 		await manager.send_direct_message(packetClass.comment_created(f"{current_user.userName} commented on your Pibble!", photoObj.photoID), photoObj.photoOwnerID) # pyright: ignore[reportArgumentType]
 		tokens = await fetchNotificationTokens(photoObj.photoOwnerID) # type: ignore
 		await dispatchNotification(tokens, f"{current_user.userName} commented on your pibble post!", f"photos?showComment={commentModel.commentID}")
+		try:
+
+			# fetch everyone who made a comment on that photoID and send them a notification
+			resp = await session.execute(select(Comment.userID).where(
+				and_(
+					Comment.photoID == photoID,
+					Comment.userID != current_user.userID,
+					Comment.userID != photoObj.photoOwnerID
+				)
+			))
+			
+			result = resp.scalars().all()
+			if result:
+				result = list(result)
+				tokens = await fetchNotificationTokens(*result)
+				await dispatchNotification(tokens, f"{current_user.userName} also commented on {photoObj.owner.userName}'s Pibble!", f"photos?showComment={commentModel.commentID}")
+			else:
+				pass
+		except Exception as er:
+			apiLog.error(f"/{photoID}/comments/create | Error sending notification to all subscribed users | Username: {current_user.userName} | \n---------------------------\nError: {er}\n\n---------------------------")
 	
 	return commentModel
 

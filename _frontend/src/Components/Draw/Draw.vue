@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import VueDrawingCanvas from 'vue-drawing-canvas';
 import Canvas from './Canvas.js';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import router from '../../router';
@@ -23,8 +22,6 @@ function undoCanvas() {
 function redoCanvas() {
 	canvas.value?.redo();
 }
-
-
 
 const isSending = ref(false);
 

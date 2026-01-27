@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue';
 
 import api from '@/api';
-import { enableNotifications } from '@/firebase';
 import NotificationElement from './NotificationElement.vue';
 
 
@@ -10,17 +9,20 @@ const notifications = ref([]);
 const notifGranted = ref(false);
 onMounted(async () => {
 	await loadNotifications()
+	await checkPermissions();
+
+})
+
+async function checkPermissions() {
 	const resp = await Notification.requestPermission();
 	if (resp === 'granted') {
 		notifGranted.value = true
 	}
-
-})
+}
 
 
 async function loadNotifications() {
 	const resp = await api.get('/notifications/fetch')
-
 	notifications.value = resp.data
 }
 </script>
@@ -30,7 +32,7 @@ async function loadNotifications() {
 <template>
 	<div class="content">
 		<div class="prompt" v-if="!notifGranted">
-			<button @click="enableNotifications" class="button">Enable Notifications</button>
+			<button @click="checkPermissions()" class="button">Enable Notifications</button>
 		</div>
 		<div class="notifications">
 
@@ -52,6 +54,7 @@ async function loadNotifications() {
 }
 
 .button {
+	cursor: pointer;
 	width: 100%;
 	font-family: 'Roboto', sans-serif;
 	font-size: 1rem;
