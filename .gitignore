@@ -30,6 +30,7 @@ coverage
 
 # Backend
 
+.order
 venv
 serviceAccountKey.json
 .env
@@ -37,3 +38,4 @@ __pycache__/
 old_
 *.db
 backend/photos
+backend/.env

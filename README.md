@@ -3,7 +3,7 @@
 
 Pibble is Social Media Platform where you draw with your friends
 
-# Setup locally hosted
+# How to Setup?
 
 ## Configuration
 
