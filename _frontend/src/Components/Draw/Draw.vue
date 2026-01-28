@@ -148,11 +148,12 @@ const CANVAS_SIZE = computed(() => {
 
 <template>
 	<div class="content">
+		
 		<div class="colour__picker" v-if="showColourPicker">
 			<Vue3ColorPicker v-model="canvasColour" :disable-history="true" :show-eye-dropper="false"
 				:show-color-list="true" :show-alpha="true" :mode="'solid'" :show-buttons="true" :show-input-menu="false"
 				:show-input-set="false" :show-picker-mode="false" :theme="'dark'" @on-save="saveColour"
-				@on-cancel="showColourPicker = false" />
+				@on-cancel="showColourPicker = false"/>
 		</div>
 
 
