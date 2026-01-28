@@ -45,8 +45,7 @@ const saveCanvas = async () => {
 			console.log(`Photo ID: ${data.photoID}`)
 			router.replace({ name: 'Edit', query: { id: data.photoID } });
 		}
-
-
+		
 		canvas.value.clear();
 		localStorage.setItem('image', '');
 		// router.back();

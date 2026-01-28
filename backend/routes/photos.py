@@ -88,28 +88,35 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 
 	specificUser = request.query_params.get('user')
 	if specificUser != None:
+		# yark fix this
 		apiLog.info(f"/photos/fetch | Specific user parameter found: {specificUser}  | Username: {current_user.userName} | {current_user.userID}")
 		result = await session.execute(select(Friend).where(
-			and_(
-				or_(
+      		Friend.status == "accepted",
+			or_(
+				and_(
 					Friend.senderID == specificUser,
 					Friend.receiverID == specificUser
 				),
-				or_(
+				and_(
 					Friend.senderID == current_user.userID,
 					Friend.receiverID == current_user.userID
 				),
-				Friend.status == "accepted"
-			)
+			),
+			# Friend.status == "accepted"
 		 )) # type: ignore
+
 		results = result.scalars().all()
+		
+  
 		if results:
+			print("they are friends")
 			statement = select(Photo).where(Photo.photoOwnerID == specificUser, Photo.isDeleted == False).order_by(Photo.photoCreatedAt.desc())
 			result = await session.execute(statement)
 			photos = result.scalars().all()
 		else:
+			print("not friends")
 			# TODO: change status code to be correct?
-			raise HTTPException(status_code=401, detail="Not friends")
+			raise HTTPException(status_code=403, detail="Not friends")
 		return photos
 
 
@@ -149,7 +156,6 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 		).limit(20).order_by(Photo.photoCreatedAt.desc())
     )
 	
-
 	if after != -1:
 		apiLog.info(f"/photos/fetch | Applied after timestamp onto statement   | Username: {current_user.userName}")
 		statement = statement.where(Photo.photoCreatedAt >= after)

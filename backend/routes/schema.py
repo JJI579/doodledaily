@@ -48,6 +48,8 @@ class CommentReturn(BaseModel):
 	createdAt: datetime.datetime
 	likeCount: int
 	hasLiked: bool
+ 
+
 class EditPhoto(BaseModel):
 	title: Optional[str] = ""
 	caption: Optional[str] = ""
