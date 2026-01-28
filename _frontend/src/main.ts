@@ -16,9 +16,3 @@ app.use(pinia)
 app.use(router);
 app.mount('#app');
 
-// if ('serviceWorker' in navigator) {
-// 	window.addEventListener('load', async () => {
-// 		await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-// 	});
-// }
-
