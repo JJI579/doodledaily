@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, U
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from database import Base
+from modules.database import Base
 
 class User(Base):
 	__tablename__ = "tblUsers"
@@ -29,14 +29,15 @@ class Token(Base):
 
 	# these are JWT Tokens
 	userID = Column(Integer, ForeignKey("tblUsers.userID"), primary_key=True, nullable=False)
-	tokenID = Column(String, primary_key=True, nullable=False)
+	bearerTokenID = Column(String, primary_key=True, nullable=False)
+	refreshTokenID = Column(String, primary_key=True, nullable=False)
 	createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
 	isActive = Column(Boolean, default=True, nullable=False)
 
 class FCMToken(Base):
 	__tablename__ = "tblFCMs"
 
-	tokenID = Column(String(512), ForeignKey("tblTokens.tokenID"), primary_key=True, nullable=False)
+	tokenID = Column(String(512), primary_key=True, nullable=False)
 	userID = Column(Integer, ForeignKey("tblUsers.userID"), nullable=False)
 	createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
 	platform = Column(String, nullable=False)
@@ -52,6 +53,8 @@ class Photo(Base):
 	photoType = Column(String, nullable=False)
 	photoCreatedAt = Column(DateTime, default=datetime.utcnow)
 	photoData = Column(String, nullable=False)
+	# alter table tblPhotos add column photoCaption default "" not null;
+	photoCaption = Column(String, nullable=False, default="")
 	photoOwnerID = Column(Integer, ForeignKey("tblUsers.userID"), nullable=False)
 	owner = relationship("User", back_populates="photos")
 	isDeleted = Column(Boolean, default=False)
@@ -108,6 +111,14 @@ class LikeComment(Base):
 	userID = Column(Integer, ForeignKey("tblUsers.userID"), primary_key=True, nullable=False)
 	isLiked = Column(Boolean, default=False, nullable=False)
 	likedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class PushCreated(Base):
+	__tablename__ = "tblPushCreated"
+
+	pushID = Column(Integer, primary_key=True, index=True)
+	pushTime = Column(DateTime, default=datetime.utcnow, nullable=False)
+	hasPushed = Column(Boolean, default=False, nullable=False)
+
 
 Photo.comments = relationship(
 	"Comment",

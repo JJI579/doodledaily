@@ -1,6 +1,11 @@
+const apiUrl = import.meta.env.VITE_ENVIRONMENT || "not";
+const debug = apiUrl == "dev";
+export default debug;
+
 type PhotoReturn = {
 	photoID: number;
 	photoName: string;
+	photoCaption: string;
 	photoType: string;
 	photoData: string;
 	photoOwnerID: number;
@@ -34,6 +39,10 @@ type UserReturn = {
 	userCreatedAt: string;
 };
 
+type UserReturnCache = UserReturn & {
+	fetchedAt: number
+}
+
 type SelfReturn = UserReturn & {
 	friends: UserReturn[];
 }
@@ -49,4 +58,12 @@ type Notification = {
 	type: string
 }
 
-export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn };
+// Websocket
+
+type WebsocketPacket = {
+	t: string
+	d: any
+}
+
+
+export type { PhotoReturn, CommentReturn, UserReturn, FriendUserReturn, Notification, SelfReturn, LoginReturn, WebsocketPacket, UserReturnCache };

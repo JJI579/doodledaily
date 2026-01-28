@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import VueDrawingCanvas from 'vue-drawing-canvas';
-import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
+import Canvas from './Canvas.js';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import router from '../../router';
 import api from '../../api';
+import ColourItem from './ColourItem.vue';
+import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
+
 
 onMounted(() => {
 	if (localStorage.getItem('token') == undefined || localStorage.getItem('token') == '') {
@@ -12,7 +15,7 @@ onMounted(() => {
 });
 
 const canvasColour = ref('000000');
-const canvas = ref<InstanceType<typeof VueDrawingCanvas> | null>(null);
+const canvas = ref<InstanceType<typeof Canvas> | null>(null);
 
 function undoCanvas() {
 	canvas.value?.undo();
@@ -37,9 +40,16 @@ const saveCanvas = async () => {
 			photoType: 'drawing',
 			photoData: imageData,
 		});
+
+		if ('photoID' in data) {
+			console.log(`Photo ID: ${data.photoID}`)
+			router.replace({ name: 'Edit', query: { id: data.photoID } });
+		}
+
+
 		canvas.value.clear();
 		localStorage.setItem('image', '');
-		router.back();
+		// router.back();
 	} catch (error: any) {
 		console.error('Failed to save canvas', error.response?.data || error.message);
 	}
@@ -63,12 +73,25 @@ function saveColour(colour?: string) {
 		canvasColour.value = canvasColour.value;
 		return
 	} else {
-		canvasColour.value = colour;
+		if (colour.includes('#')) {
+			colour = colour.slice(0, -2);
+		} else {
+
+			canvasColour.value = `#${colour}`;
+		}
+
+
+		if (!recentColours.value.includes(colour)) {
+			recentColours.value = canvasColour.value ? [colour.replace('#', ""), ...recentColours.value].slice(0, 6) : recentColours.value;
+		}
+
 	}
 
 	if (sizeObject.value) {
 		sizeObject.value.style.backgroundColor = colour ? canvasColour.value : '#000000';
 	}
+
+
 
 }
 
@@ -107,6 +130,8 @@ function clearCanvas() {
 
 loadPrevious();
 
+var recentColours = ref(["D22B2B", "0096FF", "000000", "FFFFFF", "800020", "50C878"]);
+
 
 watch(brushRange, changeSizeObject);
 function changeSizeObject(newval: number) {
@@ -115,15 +140,20 @@ function changeSizeObject(newval: number) {
 		sizeObject.value.style.height = `${brushSize.value}px`;
 	}
 }
+
+const CANVAS_SIZE = computed(() => {
+	return window.innerWidth > 600 ? 500 : 300
+})
 </script>
 
 <template>
 	<div class="content">
+		
 		<div class="colour__picker" v-if="showColourPicker">
-			<Vue3ColorPicker v-model="canvasColour" :disable-history="true" :show-eye-drop="false"
+			<Vue3ColorPicker v-model="canvasColour" :disable-history="true" :show-eye-dropper="false"
 				:show-color-list="true" :show-alpha="true" :mode="'solid'" :show-buttons="true" :show-input-menu="false"
 				:show-input-set="false" :show-picker-mode="false" :theme="'dark'" @on-save="saveColour"
-				@on-cancel="showColourPicker = false" />
+				@on-cancel="showColourPicker = false"/>
 		</div>
 
 
@@ -131,24 +161,18 @@ function changeSizeObject(newval: number) {
 			<div class="overlay" v-if="isSending">
 				Uploading...
 			</div>
-			<vue-drawing-canvas ref="canvas" :color="canvasColour" :line-width="brushSize" class="canvasObj"
-				:stroke-type="'dash'" :height="300" :width="300" :initial-image="initialImage" :line-join="'round'" />
+			<Canvas ref="canvas" :color="canvasColour" :line-width="brushSize" class="canvasObj" :stroke-type="'dash'"
+				:height="CANVAS_SIZE" :width="CANVAS_SIZE" :initial-image="initialImage" :line-join="'round'" />
 		</div>
 
 
 		<div class="toolbar">
 			<div class="toolbar__colours">
 
-
 				<div class="colour colour--picker" @click="showColourPicker = !showColourPicker">
 					<i class="pi pi-palette"></i>
 				</div>
-				<div class="colour red" @click="saveColour('#D22B2B')"></div>
-				<div class="colour blue" @click="saveColour('#0096FF')"></div>
-				<div class="colour black" @click="saveColour('#000000')"></div>
-				<div class="colour white" @click="saveColour('#FFFFFF')"></div>
-				<div class="colour purple" @click="saveColour('#800020')"></div>
-				<div class="colour green" @click="saveColour('#50C878')"></div>
+				<ColourItem v-for="colour in recentColours" :colour="colour" @colour="saveColour" />
 
 
 			</div>
@@ -173,7 +197,8 @@ function changeSizeObject(newval: number) {
 
 <style scoped lang="css">
 .content {
-	width: 300px;
+	min-width: 300px;
+	max-width: 500px;
 	height: 100%;
 	margin: auto;
 	margin-top: 1rem;
@@ -198,7 +223,8 @@ function changeSizeObject(newval: number) {
 	display: flex;
 	flex-direction: column;
 	gap: 1.5rem;
-	width: 100%;
+	width: 80%;
+	margin: auto;
 	margin-top: .5rem;
 }
 
@@ -222,11 +248,7 @@ function changeSizeObject(newval: number) {
 	font-size: 50px;
 }
 
-.colour {
-	height: 2rem;
-	width: 2rem;
-	border-radius: 8px;
-}
+
 
 .colour--picker {
 	background-color: var(--clr-surface-a20);
@@ -236,6 +258,11 @@ function changeSizeObject(newval: number) {
 
 }
 
+.colour {
+	height: 2rem;
+	width: 2rem;
+	border-radius: 8px;
+}
 
 
 /* Size Slider */
@@ -318,27 +345,9 @@ function changeSizeObject(newval: number) {
 	width: fit-content;
 } */
 
-.red {
-	background-color: #D22B2B;
-}
-
-.blue {
-	background-color: #0096FF;
-}
-
-.black {
-	background-color: black;
-}
-
-.white {
-	background-color: white;
-}
-
-.purple {
-	background-color: #800020;
-}
-
-.green {
-	background-color: #50C878;
+@media only screen and (max-width: 768px) {
+	.content {
+		width: 100%;
+	}
 }
 </style>

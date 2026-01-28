@@ -1,9 +1,13 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import router from '../../router';
 import api from '../../api';
-import { type FriendUserReturn } from '../../types';
+import { type PhotoReturn, type FriendUserReturn } from '../../types';
 import type { AxiosError } from 'axios';
+import Image from './Image.vue';
+import { useUserModel } from '../Photos/user';
+import { useRoute } from 'vue-router';
+import { useCommentModel } from '../Photos/comment';
 
 
 
@@ -11,19 +15,30 @@ const user = ref<FriendUserReturn>();
 const userID = ref(-1);
 
 
-onMounted(async () => {
-	const params = new URLSearchParams(window.location.search);
-	const userParam = params.get('id');
+const photoArray = ref<PhotoReturn[]>([]);
+
+const route = useRoute();
+
+async function initPage() {
+	const userParam = route.query.id || null;
+
 	if (userParam == null) {
 		router.push({ name: 'home' });
 	} else {
 		userID.value = Number(userParam)
-		const resp = await api.get(`/users/${userParam}/fetch?checkfriend=true`)
-		console.log(resp)
-		user.value = resp.data
-
+		const userResp = await api.get(`/users/${userParam}/fetch?checkfriend=true`)
+		user.value = userResp.data
+		const photoResp = await api.get(`/photos/fetch?user=${userParam}`)
+		photoArray.value = photoResp.data
 	}
+}
 
+watch(() => route.query.id, async () => {
+	await initPage()
+})
+
+onMounted(async () => {
+	await initPage()
 })
 
 const photoData = "true"
@@ -31,8 +46,7 @@ const photoData = "true"
 async function requestFriend() {
 	if (userID.value !== -1) {
 		try {
-			const resp = await api.post(`/friends/${userID.value}/request`)
-			console.log(resp.data)
+			await api.post(`/friends/${userID.value}/request`)
 		} catch (error) {
 			const errorObj = (error as AxiosError).response?.data;
 			if (errorObj && typeof errorObj === 'object' && "detail" in errorObj) {
@@ -41,6 +55,10 @@ async function requestFriend() {
 		}
 	}
 }
+
+const userStore = useUserModel();
+
+
 </script>
 
 
@@ -56,12 +74,15 @@ async function requestFriend() {
 			<div class="user__name">
 				<h2 class="name">{{ user?.userName }}</h2>
 			</div>
-			<button class="button" @click="requestFriend()">Add Friend</button>
+			<button class="button" @click="requestFriend()"
+				:class="{ 'button--active': !userStore.friendsDict.get(user?.userID) && !(user?.userID == userStore.user?.userID) }">Add
+				Friend
+			</button>
 
 		</div>
 		<div class="posts">
-			<!-- grid based 3x3 -->
 
+			<Image v-for="photo in photoArray" :key="photo.photoID" :image="photo" />
 		</div>
 	</div>
 </template>
@@ -114,6 +135,21 @@ async function requestFriend() {
 	min-height: 40px;
 	outline: none;
 	border: none;
+	display: none;
+}
 
+.button--active {
+	display: initial;
+}
+
+.posts {
+	justify-content: center;
+	width: fit-content;
+	margin: auto;
+	margin-top: 1rem;
+	display: flex;
+	flex-basis: 33.33%;
+	flex-wrap: wrap;
+	gap: 3px;
 }
 </style>

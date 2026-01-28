@@ -3,17 +3,28 @@ import { computed, onMounted, ref } from 'vue';
 import router from './router';
 import api from './api';
 import { enableNotifications } from './firebase';
+import { useWebsocket } from './Websocket';
+import { usePopupModel } from './Components/Popup/popup';
+import Popup from './Components/Popup/Popup.vue';
+import { useUserModel } from './Components/Photos/user';
+import CommentOverlay from './Components/Photos/CommentOverlay.vue';
+import { usePhotoStore } from './Components/Photos/photos';
 
 
-const addBackButton = computed(() => router.currentRoute.value.name !== "Photos");
+const userStore = useUserModel();
+
+const addBackButton = computed(() => router.currentRoute.value.name !== "Photos" && !router.currentRoute.value.fullPath.includes(`user?id=${userStore.user?.userID}`));
 
 function notificationsPage() {
 	router.push({ name: "Notifications" });
 }
 
+const authenticated = ref(false);
 
 onMounted(async () => {
-
+	const websocket = useWebsocket();
+	const photoStore = usePhotoStore();
+	await photoStore.fetch()
 
 	// forces update incase app has been updated.
 	var lastRefreshed = localStorage.getItem('last_refreshed');
@@ -29,11 +40,15 @@ onMounted(async () => {
 		}
 	}
 
-
-	if (localStorage.getItem('userID') == null) {
+	try {
 		const resp = await api.get('/users/fetch/@me')
+		authenticated.value = true
 		localStorage.setItem('userID', resp.data.userID)
+
+	} catch (error) {
+		console.log(error)
 	}
+
 
 
 	try {
@@ -54,22 +69,28 @@ onMounted(async () => {
 	}
 })
 
-function refresh() {
-	window.location.reload();
-}
-
 const holdStart = ref(0);
 function wasHold() {
 	const compare = new Date().getTime()
 	const seconds = (compare - holdStart.value) / 1000
 	if (seconds > .5) {
 		router.push({ name: 'Debug' })
+	} else {
+		window.location.reload();
 	}
 }
+
+const popupStore = usePopupModel();
+const activeScreen = computed(() => router.currentRoute.value.name);
+
 
 </script>
 
 <template>
+	<Teleport to="body">
+		<Popup v-model="popupStore.show" />
+	</Teleport>
+
 	<div class="menu">
 		<div class="menu__content">
 			<div class="title">
@@ -86,7 +107,30 @@ function wasHold() {
 			</div>
 		</div>
 	</div>
-	<RouterView />
+	<CommentOverlay />
+	<div class="content">
+		<RouterView />
+	</div>
+	<div class="bottom" v-if="authenticated">
+
+		<RouterLink class="button" :class="{ 'button--active': activeScreen == 'Photos' }" :to="{ name: 'Photos' }">
+			<div class="button__icon">
+				<i class="pi pi-home"></i>
+			</div>
+			<p class="button__title">Home</p>
+		</RouterLink>
+		<!-- '/user?id=' + localStorage.getItem('userID') -->
+		<RouterLink class="button" :to="{ name: 'user', query: { id: userStore.user?.userID } }"
+			:class="{ 'button--active': activeScreen == 'user' }">
+			<div class="button__icon">
+				<i class="pi pi-user"></i>
+			</div>
+			<p class="button__title">Profile</p>
+		</RouterLink>
+	</div>
+
+
+
 </template>
 
 <style lang="css" scoped>
@@ -120,5 +164,52 @@ function wasHold() {
 .end {
 	display: flex;
 	gap: 2rem;
+}
+
+.content {
+	flex: 1;
+	overflow: hidden;
+	margin-bottom: 5.5rem;
+}
+
+.bottom {
+	width: 100%;
+	height: 4rem;
+	background-color: var(--clr-surface-a0);
+	position: absolute;
+	bottom: 0;
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+
+}
+
+.button {
+	color: grey;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+	transition: 0.5s ease all;
+	cursor: pointer;
+	flex: 1;
+	text-decoration: none;
+}
+
+
+.button--active {
+	color: white
+}
+
+.button__icon {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.button__title {
+	font-size: small;
+	margin: 0;
+	margin-top: 5px;
 }
 </style>

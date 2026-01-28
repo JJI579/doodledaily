@@ -1,13 +1,13 @@
 
 
-from database import get_session
+from modules.database import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException
 from typing import TypedDict, Annotated
-from Authentication import Authentication
+from modules.Authentication import Authentication
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import select
-from models import User
+from models import User, Token
 
 JWTToken = TypedDict('JWTToken', {
 	"type": str,
@@ -16,7 +16,6 @@ JWTToken = TypedDict('JWTToken', {
 })
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 jwtAuthentication = Authentication()
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: AsyncSession = Depends(get_session)):
@@ -26,8 +25,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
 	except:
 		raise credentialsException
 
-	user = await session.execute(select(User).where(User.userID == decodedToken["id"]))
-	user = user.scalars().first()
-	if not user:
+	resp = await session.execute(select(Token, User).where(Token.bearerTokenID == token).join(User, User.userID == decodedToken['id']))
+	result = resp.all()
+	if not result:
 		raise credentialsException
-	return user
+	return result[0][1]

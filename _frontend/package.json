@@ -16,10 +16,13 @@
 		"fmt": "prettier --write 'src/**/*.{js,ts,vue,css,scss,html,json}'"
 	},
 	"dependencies": {
+		"@cyhnkckali/vue3-color-picker": "^2.1.5",
 		"@vue/cli-plugin-pwa": "^5.0.9",
 		"axios": "^1.13.2",
+		"firebase": "^12.8.0",
+		"pinia": "^3.0.4",
 		"primeicons": "^7.0.0",
-		"vue": "^3.5.25",
+		"vue": "^3.5.27",
 		"vue-router": "^4.6.3",
 		"vue3-colorpicker": "^2.3.0"
 	},
@@ -35,6 +38,7 @@
 		"prettier": "^3.7.4",
 		"typescript": "~5.9.0",
 		"vite": "^7.2.4",
+		"vite-plugin-pwa": "^1.2.0",
 		"vite-plugin-vue-devtools": "^8.0.5",
 		"vue-drawing-canvas": "^1.0.14",
 		"vue-tsc": "^3.1.5"

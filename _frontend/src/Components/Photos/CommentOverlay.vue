@@ -4,21 +4,12 @@ import router from '@/router';
 import type { CommentReturn } from '@/types';
 import { nextTick, onMounted, ref, Transition, watch } from 'vue';
 import Comment from '../Comments/Comment.vue';
+import { useCommentModel } from './comment';
 
 
 const emit = defineEmits(['update:modelValue'])
-const props = defineProps({
-	modelValue: {
-		type: Boolean,
-		required: true
-	},
-	id: {
-		type: Number,
-		required: true
-	}
-})
 
-
+const comment = useCommentModel();
 
 const comments = ref<CommentReturn[]>([]);
 
@@ -27,24 +18,25 @@ async function loadComments(photoID: number) {
 	try {
 		const { data } = await api.get(`/photos/${photoID}/comments`);
 		if ('detail' in data) {
-			console.log(data.detail);
 			return;
 		}
-
 		comments.value = data;
-
-
-
 	} catch (error: any) {
 		console.error('Failed to fetch comments', error.response?.data || error.message);
 	}
 }
 
-watch(() => props.id, (newval) => {
+
+watch(() => comment.photoID, (newval) => {
+
+	if (newval == -1) {
+		return
+	}
 	if (localStorage.getItem('token') == undefined || localStorage.getItem('token') == '') {
 		return router.push({ name: 'home' });
 	}
-	loadComments(props.id);
+
+	loadComments(newval);
 })
 
 
@@ -52,28 +44,34 @@ watch(() => props.id, (newval) => {
 const message = ref();
 const commentsRef = ref();
 
+const inprogress = ref(false)
 const submit = async () => {
 	// Get photoID from URL
-	const photoID = props.id;
+	const photoID = comment.photoID;
+	if (inprogress.value === false) {
+		try {
+			inprogress.value = true
+			// POST comment
+			const resp = await api.post(`/photos/${photoID}/comments/create`, {
+				comment: message.value,
+			});
 
-	try {
-		// POST comment
-		await api.post(`/photos/${photoID}/comments/create`, {
-			comment: message.value,
-		});
 
-		await loadComments(Number(photoID));
-		await nextTick();
-		commentsRef.value.scroll({
-			top: commentsRef.value.scrollHeight + 5,
-			behaviour: 'smooth'
-		})
+			await loadComments(Number(photoID));
+			await nextTick();
+			commentsRef.value.scroll({
+				top: commentsRef.value.scrollHeight + 5,
+				behaviour: 'smooth'
+			})
 
-		message.value = '';
-	} catch (error: any) {
-		console.error('Failed to submit comment', error.response?.data || error.message);
-		// TODO: implement popup where it says 'Comment cant be empty.'
+			inprogress.value = false
+			message.value = '';
+		} catch (error: any) {
+			console.error('Failed to submit comment', error.response?.data || error.message);
+			inprogress.value = false
+		}
 	}
+
 };
 
 
@@ -81,7 +79,7 @@ function removeParam() {
 	const url = new URL(window.location.href);
 	url.searchParams.delete('showComment');
 	window.history.replaceState({}, '', url);
-	emit('update:modelValue', false)
+	comment.closePage()
 }
 </script>
 
@@ -90,7 +88,7 @@ function removeParam() {
 <template>
 
 	<Teleport to="body">
-		<div class="popup__wrapper" @click.self="removeParam" :class="{ 'popup--active': props.modelValue }">
+		<div class="popup__wrapper" @click.self="removeParam" :class="{ 'popup--active': comment.showRef }">
 			<div class="popup">
 				<div class="popup__content">
 
@@ -100,7 +98,7 @@ function removeParam() {
 					</div>
 					<div v-else class="nothing">
 						<h2 class="nothing__1">No Comments...</h2>
-						<h3 class="nothing__2">Make a guess?</h3>
+						<h4 class="nothing__2">Why not make one?</h4>
 					</div>
 
 
@@ -160,8 +158,6 @@ function removeParam() {
 	margin-inline: .5rem;
 }
 
-
-
 .comments {
 	display: flex;
 	flex-direction: column;
@@ -191,7 +187,6 @@ function removeParam() {
 	font-size: 16px;
 	height: 2rem;
 	flex: 1;
-
 }
 
 .submit {
@@ -206,6 +201,7 @@ function removeParam() {
 }
 
 .nothing {
+	height: 35%;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;

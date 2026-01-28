@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import api from '@/api';
+import { enableNotifications } from '@/firebase';
 import type { Notification } from '@/types';
 import type { PropType } from 'vue';
 
@@ -42,13 +43,15 @@ async function acceptRequest() {
 function notAllow() {
 	alert('Never allowed to decline.')
 }
+
+
 </script>
 
 
 
 <template>
 	<div class="notification">
-
+		
 		<div class="status" :style="{ backgroundColor: colour() }">
 			<!-- this is a line -->
 		</div>

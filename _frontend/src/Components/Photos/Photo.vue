@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, type PropType, type Ref } from 'vue';
 import type { PhotoReturn, UserReturn } from '../../types';
-import { RouterLink } from 'vue-router';
 import router from '../../router';
 import api from '../../api';
+import { useUserModel } from './user';
 
 const props = defineProps({
 	photo: {
@@ -29,7 +29,8 @@ const photoCreatedAtDate = computed(() => {
 	return props.photo.photoCreatedAt;
 });
 
-const likesCount = ref(props.photo.likesCount);
+
+const likesCount = computed(() => props.photo.likesCount);
 const emit = defineEmits(['favourited', 'selectmenu', 'comment']);
 const isFavourited = ref(props.photo.isFavourited);
 
@@ -38,14 +39,7 @@ const favouriteImage = async () => {
 	if (isFavourited.value) return;
 	try {
 		const { data } = await api.post(`/photos/${props.photo.photoID}/favourite`);
-
-		if ('detail' in data) {
-			if (data.detail === 'Favourited') {
-				isFavourited.value = true;
-				likesCount.value++;
-			}
-		}
-
+		isFavourited.value = true
 		// Emit event immediately after response
 		emit('favourited', props.photo.photoID);
 	} catch (error: any) {
@@ -80,6 +74,7 @@ const relativeTime = computed(() => {
 });
 
 
+const userStore = useUserModel();
 
 const owner: Ref<UserReturn | undefined> = ref(props.user);
 
@@ -94,7 +89,7 @@ onMounted(async () => {
 		return
 	}
 	try {
-		const { data } = await api.get(`/users/${props.photo.photoOwnerID}/fetch`);
+		const data = await userStore.fetchUser(props.photo.photoOwnerID);
 		owner.value = data;
 	} catch (error: any) {
 		console.error('Failed to fetch owner', error.response?.data || error.message);
@@ -153,6 +148,14 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 				<button class="button--action" @click="downloadBase64Image()">
 					<span class="pi pi-download"></span>
 				</button>
+			</div>
+			<div class="photo__caption">
+				<div v-if="photo.photoName" class="photo__title">
+					{{ photo.photoName }}
+					<br>
+				</div>
+
+				{{ photo.photoCaption }}
 			</div>
 			<div class="photo__time">
 				<p class="text">{{ relativeTime }}</p>
@@ -242,8 +245,8 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 }
 
 .photo__content {
-	padding-left: 2rem;
-	width: 100%;
+	margin: auto;
+	width: 95%;
 	display: flex;
 	flex-direction: column;
 	gap: .75rem;
@@ -253,6 +256,7 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 	width: 95%;
 	font-size: small;
 	margin-bottom: 0.5rem;
+	color: grey;
 }
 
 .text {
@@ -265,6 +269,18 @@ const visible = props.photo.photoOwnerID === Number(localStorage.getItem('userID
 	display: flex;
 	gap: .5rem;
 	width: 100%;
+}
+
+.photo__title {
+	font-weight: bold;
+}
+
+.photo__caption {
+	font-size: 14px;
+}
+
+.bold {
+	font-weight: bold;
 }
 
 @media (min-width: 1024px) {

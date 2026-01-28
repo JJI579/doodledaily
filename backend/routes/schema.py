@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 import datetime
-
+from typing import Optional
 class PhotoCreate(BaseModel):
 	photoName: str
 	photoType: str
 	photoData: str
+	photoCaption: str = ""
 
 class UserFetch(BaseModel):
 	userID: int
@@ -47,7 +48,9 @@ class CommentReturn(BaseModel):
 	createdAt: datetime.datetime
 	likeCount: int
 	hasLiked: bool
-
+class EditPhoto(BaseModel):
+	title: Optional[str] = ""
+	caption: Optional[str] = ""
 
 class CommentCreate(BaseModel):
 	comment: str

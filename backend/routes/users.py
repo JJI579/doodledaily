@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlmodel import select
-from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
-from funcs import get_current_user, get_session
+from models import User, Friend
+from modules.funcs import get_current_user, get_session
 from .schema import UserFetch, ExtendedUserFetch, RequestFetch, SelfFetch
 from sqlalchemy import case, or_, and_
 from typing import Union
@@ -31,7 +30,7 @@ async def fetch_self(current_user: Annotated[User, Depends(get_current_user)], s
 			Friend.receiverID == User.userID
 		),
 		isouter=True
-	).group_by(User.userID)
+	).group_by(User.userID).distinct()
 	)
 
 	allFriends = fetchFriends.all()
@@ -123,7 +122,4 @@ async def fetchUsers(request: Request, current_user: Annotated[User, Depends(get
 		)
 		), isouter=True).where(User.deactivated==False)
 	resp = await session.execute(statement)
-	# print(resp.all()[0])
-	# print([x.status for x in resp.all()])
-	
 	return [RequestFetch(wasSent=wasSent, status=friendStatus if friendStatus else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user, friendStatus, wasSent in resp.all() if user.userID != current_user.userID]

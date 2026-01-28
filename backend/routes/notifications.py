@@ -1,15 +1,10 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlmodel import select, update, and_, or_
+from fastapi import APIRouter, Depends
+from sqlmodel import select, and_, or_
 from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
-from funcs import get_current_user, get_session
-from typing import Sequence
-from .auth import fetchNotificationTokens
-from fcm_messaging import dispatchNotification
-
-import datetime
+from models import User,  Friend
+from modules.funcs import get_current_user, get_session
 
 router = APIRouter(
 	prefix="/notifications",
@@ -30,10 +25,7 @@ async def fetchNotifications(current_user: Annotated[User, Depends(get_current_u
 		or_(
 			and_(
 				Friend.status == "pending",
-				or_(
-					Friend.receiverID == current_user.userID,
-					Friend.senderID == current_user.userID
-				)
+				Friend.receiverID == current_user.userID
 		),
 		and_(
 			Friend.status == "accepted",

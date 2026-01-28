@@ -2,8 +2,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, messaging
 from pathlib import Path
-import asyncio
-from funcs import get_session
+from modules.funcs import get_session
 
 # database stuff
 from sqlmodel import delete
@@ -36,7 +35,6 @@ async def dispatchNotification(tokens: list, text: str, urlSuffix: str="photos")
 				link="https://pibble.pics"+'/'+("photos" if not urlSuffix else urlSuffix)
 		)
 		),
-		
 	)
 
 	try:
@@ -57,10 +55,3 @@ async def dispatchNotification(tokens: list, text: str, urlSuffix: str="photos")
 				print(f"Token sent: {tokens[idx]}")
 	except Exception as e:
 		print("Error sending message:", e)
-
-# test the push
-# from routes import auth
-
-# tokens = asyncio.run(auth.fetchNotificationTokens(4))
-# print(len(tokens))
-# asyncio.run(dispatchNotification(tokens, "hello world"))

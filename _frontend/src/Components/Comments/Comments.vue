@@ -24,10 +24,8 @@ async function loadComments(photoID: number) {
 	try {
 		const { data } = await api.get(`/photos/${photoID}/comments`);
 		if ('detail' in data) {
-			console.log(data.detail);
 			return;
 		}
-
 		comments.value = data;
 
 

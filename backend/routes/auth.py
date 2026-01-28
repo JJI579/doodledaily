@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
-from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Token, FCMToken
 import hashlib 
 import secrets
 import datetime
 import os
-from funcs import get_session, get_current_user
+from modules.funcs import get_session, get_current_user
 from .schema import refreshForm, loginForm, registerForm, TokenForm
-from Authentication import Authentication
+from modules.Authentication import Authentication
+from sqlalchemy import update
+from modules.logger import APILogger
+
+apiLog = APILogger()
 
 router = APIRouter(
 	prefix="",
@@ -31,12 +34,20 @@ async def fetchNotificationTokens(*users: int) -> list[str]:
 
 @router.post('/refresh')
 async def refresh(refreshData: refreshForm, session: AsyncSession = Depends(get_session)):
-	resp = await session.execute(select(Token).where(Token.tokenID == refreshData.token))
+	apiLog.info(f"/refresh | Received request to refresh token | {refreshData.token[:15]}...")
+	resp = await session.execute(select(Token).where(Token.refreshTokenID == refreshData.token))
 	tokenData: Token = resp.scalars().first()
+
+	apiLog.info(f"/refresh | Fetching data | {refreshData.token[:15]}...")
 	if tokenData:
+		apiLog.info(f"/refresh | Granted request, creating new Bearer Token | User ID: {tokenData.userID}")
 		accessToken, expiry = jwtAuthentication.create_access_token(tokenData.userID) # type: ignore
+		await session.execute(update(Token).where(Token.refreshTokenID == refreshData.token).values(bearerTokenID=accessToken, isActive=True))
+		await session.commit()
+		apiLog.info(f"/refresh | Committed new Bearer into Database | User ID: {tokenData.userID}")
 		return {'access_token': accessToken, 'token_type': 'bearer', 'expires_in': expiry}
 	else:
+		apiLog.warning(f"/refresh | Invalid Refresh Token, rejected. | {refreshData.token}")
 		raise HTTPException(status_code=401, detail="Invalid refresh token")
 	
 @router.post('/login')
@@ -44,25 +55,30 @@ async def login(loginData: loginForm, session: AsyncSession = Depends(get_sessio
 	resp = await session.execute(select(User).where(User.userName == loginData.username)) 
 	user: User = resp.scalars().first() 
 	if not user:
+		apiLog.warning(f"/login | User not found | {loginData.username}")
 		raise HTTPException(status_code=401, detail="Incorrect password or username invalid")
 
 	mysalt = os.getenv('SALT')
 	saltedPassword = f'{mysalt}:{loginData.password}'
 	hashedPassword = hashlib.sha256(saltedPassword.encode('utf-8')).hexdigest()
 	if hashedPassword == (user.userPassword): # pyright: ignore[reportOptionalMemberAccess]
+		apiLog.info(f"/login | User found and authenticated | {loginData.username}")
 		accessToken, expiry = jwtAuthentication.create_access_token(user.userID) # type: ignore
-
+		apiLog.info(f"/login | Generated Bearer Token | {loginData.username}")
 		refresh_token = secrets.token_urlsafe(56)
+		apiLog.info(f"/login | Generated Refresh Token | {loginData.username}")
+
 		while True:
-			if not (await session.execute(select(Token).where(Token.tokenID == refresh_token))).scalar_one_or_none() :
+			if not (await session.execute(select(Token).where(Token.bearerTokenID == refresh_token))).scalar_one_or_none():
 				break
 			else:
 				refresh_token = secrets.token_urlsafe(56)
+				apiLog.info(f"/login | Refresh token regenerated due to duplication. | {loginData.username}")
 
-		refreshTokenObject = Token(tokenID=refresh_token, userID=user.userID, isActive=True)
+		refreshTokenObject = Token(refreshTokenID=refresh_token, bearerTokenID=accessToken, userID=user.userID, isActive=True)
 		session.add(refreshTokenObject)
 		await session.commit()
-
+		apiLog.info(f"/login | Committed new Bearer + Refresh into Database | {loginData.username}")
 		return {
 			"type": "Bearer",
 			"id": user.userID,
@@ -70,6 +86,7 @@ async def login(loginData: loginForm, session: AsyncSession = Depends(get_sessio
 			"refresh_token": refresh_token,
 			"expires_at": expiry
 		}
+	apiLog.warning(f"/login | Incorrect password or username invalid | {loginData.username}")
 	raise HTTPException(status_code=401, detail="Incorrect password or username invalid")
 
 @router.post('/register')
@@ -78,10 +95,12 @@ async def register(registerData: registerForm, session: AsyncSession = Depends(g
 	resp = await session.execute(select(User).where(User.userName == registerData.username))
 	user = resp.scalars().first()
 	if user: 
+		apiLog.warning(f"/register | User already exists | {registerData.username}")
 		raise HTTPException(status_code=404, detail="User already exists")
 	
 	# check password length
 	if len(registerData.password) < 8:
+		apiLog.warning(f"/register | Password too short | {registerData.username}")
 		raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
 
 	mysalt = os.getenv('SALT')
@@ -90,6 +109,7 @@ async def register(registerData: registerForm, session: AsyncSession = Depends(g
 	newUser = User(userName=registerData.username, userPassword=hashedPassword, userCreatedAt=datetime.datetime.now(datetime.timezone.utc))
 	session.add(newUser)
 	await session.commit()
+	apiLog.warning(f"/login | Created user and committed. | {registerData.username}")
 	return {"message": "User created successfully"}
 
 @router.post('/token')
@@ -100,10 +120,12 @@ async def fcmToken(tokenFormData: TokenForm, user: User = Depends(get_current_us
 		# TODO: if token data, consider what to do 
 		# await session.delete(tokenData)
 		# await session.commit()
+		apiLog.info(f"/token (fcm) | Token found and still in database | {user.userName}")
 		return {"message": "Token has been found."}
 	else:
 		# create token
 		refreshTokenObject = FCMToken(platform=tokenFormData.platform, tokenID=tokenFormData.token, userID=user.userID)
 		session.add(refreshTokenObject)
 		await session.commit()
+		apiLog.info(f"/token (fcm) | Token created in database | {user.userName} | {tokenFormData.token[:15]}...")
 		return {"message": "Token created successfully"}

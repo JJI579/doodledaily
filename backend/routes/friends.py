@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from sqlmodel import select, update, and_
-from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, Photo, Comment, Favourite, Token, FCMToken, Friend
-from funcs import get_current_user, get_session
-
+from models import User, Friend
+from modules.funcs import get_current_user, get_session
 from .auth import fetchNotificationTokens
-from fcm_messaging import dispatchNotification
+from modules.fcm_messaging import dispatchNotification
 
 router = APIRouter(
 	prefix="/friends",
@@ -38,7 +36,7 @@ async def requestFriend(request: Request, user: Annotated[User, Depends(get_curr
 			result.status = "pending" # type: ignore
 			await session.commit()
 			tokens = await fetchNotificationTokens(receiverID)
-			await dispatchNotification(tokens, f"{user.userName} has requested you as a friend!")
+			await dispatchNotification(tokens, f"{user.userName} has requested you as a friend!") # type: ignore
 			return Response(status_code=204)
 		raise HTTPException(status_code=400, detail="Friend request already sent")
 	else:

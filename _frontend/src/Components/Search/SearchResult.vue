@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import api from '@/api';
 import router from '@/router';
+import { RouterLink } from 'vue-router';
 
 
 
@@ -47,15 +48,15 @@ async function acceptRequest() {
 	<div class="result">
 
 		<div class="result__wrapper">
-
-			<div class="text" @click="() => router.push({ name: 'user', query: { id: props.data.userID } })">
+			<!-- @click="() => router.push({ name: 'user', query: { id: props.data.userID } })" -->
+			<RouterLink class="text" :to="{ name: 'user', query: { id: props.data.userID } }">
 				<div class="image">
 					<img class="img" :src="props.data.userPhoto ?? 'pwa-64x64.png'">
 				</div>
 				<div class="name">
 					{{ props.data.userName }}
 				</div>
-			</div>
+			</RouterLink>
 
 			<div class="actions">
 				<button class="action" @click="requestUser()"
@@ -105,6 +106,8 @@ async function acceptRequest() {
 	display: flex;
 	align-items: center;
 	gap: .5rem;
+	color: white;
+	text-decoration: none;
 }
 
 .image {
