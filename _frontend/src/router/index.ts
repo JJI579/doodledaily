@@ -8,6 +8,7 @@ import Comments from '@/Components/Comments/Comments.vue';
 import Debug from '@/Components/Debug.vue';
 import Search from '@/Components/Search/Search.vue';
 import Caption from '@/Components/Photos/Caption.vue';
+import Settings from '@/Components/Settings/Settings.vue';
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,11 @@ const router = createRouter({
 			path: '/edit',
 			name: 'Edit',
 			component: Caption
+		},
+		{
+			path: '/settings',
+			name: 'Settings',
+			component: Settings
 		}
 	],
 });

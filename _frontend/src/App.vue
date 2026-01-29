@@ -19,6 +19,10 @@ function notificationsPage() {
 	router.push({ name: "Notifications" });
 }
 
+function settingsPage() {
+	router.push({ name: "Settings" });
+}
+
 const authenticated = ref(false);
 
 onMounted(async () => {
@@ -82,6 +86,7 @@ function wasHold() {
 
 const popupStore = usePopupModel();
 const activeScreen = computed(() => router.currentRoute.value.name);
+const isProfilePage = computed(() => activeScreen.value === 'user');
 
 
 </script>
@@ -100,10 +105,18 @@ const activeScreen = computed(() => router.currentRoute.value.name);
 			</div>
 
 			<div class="end" v-if="!addBackButton">
-				<div class="menu__button temp" @click="() => router.push({ name: 'Search' })"><i
-						class="pi pi-search"></i></div>
-				<div class="menu__button" @click="notificationsPage()"><i class="pi pi-bell"></i>
+				<div class="menu__button temp" @click="() => router.push({ name: 'Search' })">
+					<i class="pi pi-search"></i>
 				</div>
+
+				<div class="menu__button" v-if="!isProfilePage" @click="notificationsPage()">
+					<i class="pi pi-bell"></i>
+				</div>
+
+				<div class="menu_button" v-else="isProfilePage" @click="settingsPage()">
+					<i class="pi pi-cog"></i>
+				</div>
+
 			</div>
 		</div>
 	</div>

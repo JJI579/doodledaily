@@ -142,6 +142,28 @@ const userStore = useUserModel();
 	display: initial;
 }
 
+.settingsButtonContainer {
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.settingsButton {
+	/* position: fixed; */
+	color: white;
+	top: 10px;
+	right: 10px;
+	background-color: transparent;
+	border: none;
+	font-size: 24px;
+	cursor: pointer;
+	display: none;
+}
+
+.settingsButton--active {
+	display: initial;
+}
+
 .posts {
 	justify-content: center;
 	width: fit-content;

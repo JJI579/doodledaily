@@ -91,24 +91,22 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 		# yark fix this
 		apiLog.info(f"/photos/fetch | Specific user parameter found: {specificUser}  | Username: {current_user.userName} | {current_user.userID}")
 		result = await session.execute(select(Friend).where(
-      		Friend.status == "accepted",
-			or_(
-				and_(
+			and_(
+				or_(
 					Friend.senderID == specificUser,
 					Friend.receiverID == specificUser
 				),
-				and_(
+				or_(
 					Friend.senderID == current_user.userID,
 					Friend.receiverID == current_user.userID
 				),
-			),
-			# Friend.status == "accepted"
+				Friend.status == "accepted"
+			)
 		 )) # type: ignore
-
 		results = result.scalars().all()
 		
   
-		if results:
+		if results or specificUser == str(current_user.userID):
 			print("they are friends")
 			statement = select(Photo).where(Photo.photoOwnerID == specificUser, Photo.isDeleted == False).order_by(Photo.photoCreatedAt.desc())
 			result = await session.execute(statement)
