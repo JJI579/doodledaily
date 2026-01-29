@@ -112,7 +112,6 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 			result = await session.execute(statement)
 			photos = result.scalars().all()
 		else:
-			print("not friends")
 			# TODO: change status code to be correct?
 			raise HTTPException(status_code=403, detail="Not friends")
 		return photos
