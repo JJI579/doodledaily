@@ -58,6 +58,12 @@ async def login(loginData: loginForm, session: AsyncSession = Depends(get_sessio
 		apiLog.warning(f"/login | User not found | {loginData.username}")
 		raise HTTPException(status_code=401, detail="Incorrect password or username invalid")
 
+	print("logging in user:", user.userName)
+
+	if bool(user.deactivated == 1):
+		apiLog.warning(f"/login | Attempt to login to deactivated account | {loginData.username}")
+		raise HTTPException(status_code=403, detail="Account is deactivated")
+
 	mysalt = os.getenv('SALT')
 	saltedPassword = f'{mysalt}:{loginData.password}'
 	hashedPassword = hashlib.sha256(saltedPassword.encode('utf-8')).hexdigest()

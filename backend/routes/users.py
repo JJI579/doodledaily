@@ -123,3 +123,11 @@ async def fetchUsers(request: Request, current_user: Annotated[User, Depends(get
 		), isouter=True).where(User.deactivated==False)
 	resp = await session.execute(statement)
 	return [RequestFetch(wasSent=wasSent, status=friendStatus if friendStatus else "none", userID=user.userID, userName=user.userName, userCreatedAt=user.userCreatedAt) for user, friendStatus, wasSent in resp.all() if user.userID != current_user.userID]
+
+
+@router.delete('/delete/@me')
+async def delete_self(current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
+	setattr(current_user, 'deactivated', True)
+	session.add(current_user)
+	await session.commit()
+	return {"detail": "Account deactivated successfully."}
