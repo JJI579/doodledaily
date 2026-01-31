@@ -155,4 +155,3 @@ async def change_username(new_username: str, current_user: Annotated[User, Depen
     await session.commit()
     return {"detail": "Username changed successfully."}
     
-    
