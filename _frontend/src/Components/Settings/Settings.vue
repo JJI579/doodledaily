@@ -10,6 +10,10 @@ function logout() {
 	router.push({ name: 'home' });
 }
 
+function changeUsername() {
+  router.push({ name: 'ChangeUsername' });
+}
+
 async function deleteAccount() {
   try {
     await api.delete('/users/delete/@me');
@@ -17,6 +21,11 @@ async function deleteAccount() {
   } catch (error) {
     console.error('Error deleting account:', error);
   }
+}
+
+const showOptions = ref(false);
+function toggleOptions() {
+  showOptions.value = !showOptions.value;
 }
 
 </script>
@@ -29,9 +38,31 @@ async function deleteAccount() {
     <h2>Settings</h2>
 
     <div class="settingItems">
+      <p @click="changeUsername()">Change Username</p>
       <p @click="router.push({ name: 'ChangePassword' })">Change Password</p>
-      <p @click="deleteAccount()">Delete Account</p>
+      <p>Download all pibbles</p>
+
+
+      <!-- The delete button is complete, work on the other ones -->
+      <p @click="toggleOptions">Delete Account</p>
     </div>
+
+    <Teleport to="body">
+			<div class="popup__wrapper">
+				<div class="popup" v-if="showOptions">
+					<div class="popup__content">
+						<p class="popup__button__delete" @click="deleteAccount">
+              Yes, I want to delete my account
+            </p>
+						<hr class="popup__hr">
+						<button class="popup__button" @click="toggleOptions">
+              No, take me back
+            </button>
+					</div>
+				</div>
+			</div>
+		</Teleport>
+
 
     <div class="logoutSection">
       <button class="logoutButton" @click="logout()">Logout</button>
@@ -71,6 +102,72 @@ h2 {
 
 .settingItems p:not(:last-child) {
   border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.popup {
+	position: absolute;
+	background-color: var(--clr-surface-a0);
+	height: 15%;
+	width: 100%;
+	bottom: -15%;
+	animation: 0.2s forwards slideUp;
+}
+
+
+
+@keyframes slideUp {
+	0% {
+		bottom: -15%;
+	}
+
+	100% {
+		bottom: 0%;
+	}
+}
+
+.popup__content {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+.popup__button {
+	width: 100%;
+	border: none;
+	margin: auto;
+	height: 40px;
+	background: none;
+	font-size: 16px;
+	cursor: pointer;
+	color: white;
+	text-decoration: none;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.popup__button__delete {
+  width: 100%;
+  border: none;
+  margin: auto;
+  height: 40px;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: rgb(183, 1, 1);
+  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup__hr {
+	width: 80%;
+	margin: 0;
+	padding: 0;
 }
 
 

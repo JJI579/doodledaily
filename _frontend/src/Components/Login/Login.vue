@@ -127,12 +127,14 @@ onMounted(() => {
 					isLogin == true ? 'Register' : 'Login'
 				}}</span>
 			</p>
+
 			Your Username
 			<input class="form__input" type="text" v-model="username" name="username"
 				:class="{ error: username == '' && hasChecked }" />
 			Password
 			<input class="form__input" type="password" v-model="password" name="password"
 				:class="{ error: password == '' && hasChecked }" />
+				
 			<button @click="handle()" class="login">
 				{{ isLogin == true ? 'Login' : 'Register' }}
 			</button>
