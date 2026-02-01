@@ -87,6 +87,7 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 	apiLog.info(f"/photos/fetch | -- Fetch Photos start -- | Username: {current_user.userName}")
 
 	specificUser = request.query_params.get('user')
+ 
 	if specificUser != None:
 		# yark fix this
 		apiLog.info(f"/photos/fetch | Specific user parameter found: {specificUser}  | Username: {current_user.userName} | {current_user.userID}")
@@ -123,6 +124,7 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
 		after = datetime.datetime.fromisoformat(afterTimestamp.replace('Z', '+00:00'))
 	else:
 		after = -1
+  
 	
 	statement = (
         select(
@@ -136,6 +138,7 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
         )
         .join(Favourite, (Favourite.photoID == Photo.photoID) & (Favourite.isFavourited == True), isouter=True)
         .join(Comment, Comment.photoID == Photo.photoID, isouter=True)
+        .join(User, User.userID == Photo.photoOwnerID)
         .group_by(
             Photo.photoID,
             Photo.photoName,
@@ -146,6 +149,7 @@ async def fetch_photos(request: Request, current_user: Annotated[User, Depends(g
         )
 		.where(
 			Photo.isDeleted == False, 
+			User.deactivated == False,
 			or_(
 				friend_exists(current_user.userID, Photo.photoOwnerID), # type: ignore
 				Photo.photoOwnerID == current_user.userID

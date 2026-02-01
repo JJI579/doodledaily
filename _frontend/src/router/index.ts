@@ -9,6 +9,8 @@ import Debug from '@/Components/Debug.vue';
 import Search from '@/Components/Search/Search.vue';
 import Caption from '@/Components/Photos/Caption.vue';
 import Settings from '@/Components/Settings/Settings.vue';
+import ChangeUsername from '@/Components/Settings/ChangeUsername.vue';
+import ChangePassword from '@/Components/Settings/ChangePassword.vue';
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -62,6 +64,16 @@ const router = createRouter({
 			path: '/settings',
 			name: 'Settings',
 			component: Settings
+		},
+		{
+			path: '/change-username',
+			name: 'ChangeUsername',
+			component: ChangeUsername
+		},
+		{
+			path: '/change-password',
+			name: 'ChangePassword',
+			component: ChangePassword
 		}
 	],
 });

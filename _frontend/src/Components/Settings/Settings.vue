@@ -10,6 +10,10 @@ function logout() {
 	router.push({ name: 'home' });
 }
 
+function changeUsername() {
+  router.push({ name: 'ChangeUsername' });
+}
+
 async function deleteAccount() {
 	try {
 		await api.delete('/users/delete/@me');
@@ -17,6 +21,11 @@ async function deleteAccount() {
 	} catch (error) {
 		console.error('Error deleting account:', error);
 	}
+}
+
+const showOptions = ref(false);
+function toggleOptions() {
+  showOptions.value = !showOptions.value;
 }
 
 </script>
@@ -33,9 +42,36 @@ async function deleteAccount() {
 			<p class="setting__item" @click="deleteAccount()">Delete Account</p>
 		</div>
 
-		<div class="logoutSection">
-			<button class="logoutButton" @click="logout()">Logout</button>
-		</div>
+    <div class="settingItems">
+		<p class="setting__item" @click="router.push({ name: 'ChangePassword' })">Change Password</p>
+		<p class="setting__item" @click="deleteAccount()">Delete Account</p>
+		<p class="setting__item">Download all pibbles</p>
+
+
+      <!-- The delete button is complete, work on the other ones -->
+      <p @click="toggleOptions">Delete Account</p>
+    </div>
+
+    <Teleport to="body">
+			<div class="popup__wrapper">
+				<div class="popup" v-if="showOptions">
+					<div class="popup__content">
+						<p class="popup__button__delete" @click="deleteAccount">
+              Yes, I want to delete my account
+            </p>
+						<hr class="popup__hr">
+						<button class="popup__button" @click="toggleOptions">
+              No, take me back
+            </button>
+					</div>
+				</div>
+			</div>
+		</Teleport>
+
+
+    <div class="logoutSection">
+      <button class="logoutButton" @click="logout()">Logout</button>
+    </div>
 
 	</div>
 </template>

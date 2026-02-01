@@ -12,6 +12,7 @@ const hasChecked = ref(false);
 const username = ref('');
 const password = ref('');
 const error = ref('');
+const showPassword = ref(false);
 
 const login = async () => {
 	error.value = '';
@@ -127,12 +128,17 @@ onMounted(() => {
 					isLogin == true ? 'Register' : 'Login'
 				}}</span>
 			</p>
+
 			Your Username
 			<input class="form__input" type="text" v-model="username" name="username"
 				:class="{ error: username == '' && hasChecked }" />
 			Password
-			<input class="form__input" type="password" v-model="password" name="password"
-				:class="{ error: password == '' && hasChecked }" />
+			<div class="passwordField">
+				<input class="form__input" :type="showPassword ? 'text' : 'password'" v-model="password" name="password"
+					:class="{ error: password == '' && hasChecked }" />
+				<span class="pi" :class="showPassword ? 'pi-eye-slash' : 'pi-eye'" @click="showPassword = !showPassword"></span>
+			</div>
+
 			<button @click="handle()" class="login">
 				{{ isLogin == true ? 'Login' : 'Register' }}
 			</button>
@@ -158,6 +164,30 @@ onMounted(() => {
 	gap: 1rem;
 	width: 85%;
 	margin: auto;
+}
+
+.passwordField {
+	display: flex;
+	position: relative;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	color: black;
+}
+
+.passwordField .form__input {
+	cursor: pointer;
+	flex: 1;
+	width: 100%;
+}
+
+.passwordField .pi {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    opacity: 0.7;
 }
 
 .form__input {
