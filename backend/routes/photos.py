@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import StreamingResponse
+from requests import session
 from sqlmodel import select, and_, or_, exists
 from typing import Annotated, Union, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,11 +9,14 @@ from modules.funcs import get_current_user, get_session
 from sqlalchemy import case, func
 from .schema import PhotoCreate, PhotoReturn, CommentCreate, CommentReturn, LikesPhotoReturn, EditPhoto
 import secrets
+import io, zipfile, base64
+import os
 
 from base64 import b64decode
 from .auth import fetchNotificationTokens
 from modules.fcm_messaging import dispatchNotification
 import datetime
+
 
 from modules.WebsocketManager import manager, packetClass
 
@@ -401,3 +406,39 @@ async def likeComment(request: Request, current_user: Annotated[User, Depends(ge
 	}	
 		
 
+@router.get('/download/@me')
+async def downloadMyPhotos(request: Request, current_user: Annotated[User, Depends(get_current_user)], session: AsyncSession=Depends(get_session)):
+	result = await session.execute(select(Photo).where(Photo.photoOwnerID == current_user.userID))
+	photos = result.scalars().all()
+	zipBuffer = io.BytesIO()
+ 
+	if not photos:
+		raise HTTPException(status_code=404, detail="No photos found to download")
+ 
+	print(f"Downloading photos for user {current_user.userName}")
+ 
+	with zipfile.ZipFile(zipBuffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+		for photo in photos:
+			photoURL = photo.photoData
+			photoPath = photoURL.replace("http://127.0.0.1:8000/static","photos")
+
+			filePath = os.path.join(photoPath)
+   
+			print("Trying path:", filePath)
+			print("Exists?", os.path.exists(filePath))
+			
+			if os.path.exists(filePath):
+				zf.write(filePath, arcname=os.path.basename(filePath))
+                
+	zipBuffer.seek(0)
+ 
+	return StreamingResponse(
+		zipBuffer,
+		media_type='application/zip',
+		headers={
+			'Content-Disposition': f'attachment; filename="my_pibbles_{current_user.userName}.zip"'
+		}
+	)
+	
+			
+      

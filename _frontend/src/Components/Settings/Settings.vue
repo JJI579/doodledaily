@@ -2,6 +2,12 @@
 import { onMounted, ref, watch } from 'vue';
 import router from '../../router';
 import api from '../../api';
+import { all } from 'axios';
+import { useUserModel } from '../Photos/user';
+import { reduceEachLeadingCommentRange } from 'typescript';
+
+const userStore = useUserModel();
+
 
 function logout() {
 	localStorage.removeItem('token');
@@ -23,6 +29,24 @@ async function deleteAccount() {
   }
 }
 
+async function downloadMyPibbles() {
+
+  console.log("Downloading my pibbles");
+
+  const res = await api.get('/photos/download/@me', {
+    responseType: 'blob',
+  });
+
+  console.log("Downloading pibbles:", res);
+
+  const url = URL.createObjectURL(res.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = userStore.username + 'Pibbles.zip';
+  link.click();
+}
+
+
 const showOptions = ref(false);
 function toggleOptions() {
   showOptions.value = !showOptions.value;
@@ -40,7 +64,7 @@ function toggleOptions() {
     <div class="settingItems">
       <p @click="changeUsername()">Change Username</p>
       <p @click="router.push({ name: 'ChangePassword' })">Change Password</p>
-      <p>Download all pibbles</p>
+      <p @click="downloadMyPibbles()">Download all pibbles</p>
 
 
       <!-- The delete button is complete, work on the other ones -->
