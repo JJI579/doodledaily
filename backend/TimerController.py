@@ -1,14 +1,13 @@
 import datetime, secrets
-from fcm_messaging import dispatchNotification
+from modules.fcm_messaging import dispatchNotification
 from routes.auth import fetchNotificationTokens
 from sqlalchemy import select, update, and_
 from models import PushCreated, User
-from database import get_session, init_db
+from modules.database import get_session, init_db
 import asyncio
 from modules.logger import DailyNotificationLogger
 
 logger = DailyNotificationLogger(name="DailyNotificationLogger", logFileName="daily_notification.log")
-
 
 def provideRandomTime(focusedDay: datetime.datetime):
 	# timeRange of 9am to 9pm
@@ -36,7 +35,7 @@ async def handle_daily_push(focusedDay = datetime.datetime.utcnow()):
 	resp = None
 	async for session in get_session():
 		resp = await session.execute(select(PushCreated).where(
-			and_(PushCreated.pushTime > focusedDay,PushCreated.hasPushed == False)
+			and_(PushCreated.pushTime > focusedDay, PushCreated.hasPushed == False)
 		))
 	if not resp:
 		logger.info("this is true?")
