@@ -62,16 +62,11 @@ function toggleOptions() {
 		<h2 class="settings">Settings</h2>
 
 		<div class="settingItems">
+      <p class="setting__item" @click="changeUsername()">Change Username</p>
 			<p class="setting__item" @click="router.push({ name: 'ChangePassword' })">Change Password</p>
+      <p class="setting__item" @click="downloadMyPibbles()">Download all pibbles</p>
 			<p class="setting__item" @click="deleteAccount()">Delete Account</p>
 		</div>
-
-    <div class="settingItems">
-      <p @click="changeUsername()">Change Username</p>
-      <p @click="router.push({ name: 'ChangePassword' })">Change Password</p>
-      <p @click="downloadMyPibbles()">Download all pibbles</p>
-      <p @click="toggleOptions">Delete Account</p>
-    </div>
 
     <Teleport to="body">
 			<div class="popup__wrapper">
